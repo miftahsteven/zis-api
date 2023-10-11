@@ -1,0 +1,24 @@
+{
+    "name": "zis-api",
+    "version": "1.0.0",
+    "description": "API Untuk Zis",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: No test specified.\" && exit 1"
+    },
+    "author": "MSCODX",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "express": "^4.18.2",
+        "https": "^1.0.0",
+        "jsonwebtoken": "^9.0.2",
+        "md5": "^2.3.0",
+        "multer": "^1.4.5-lts.1",
+        "mysql2": "3.0.0",
+        "nodemailer": "^6.9.5",
+        "path": "^0.12.7",
+        "sequelize": "^6.33.0"
+    }
+}
