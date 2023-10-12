@@ -16,9 +16,6 @@ module.exports = {
 
       const params = {
         program_status: 1,
-        program_institusi: {
-          institusi_id: 1,
-        },
         program_title: {
           contains: keyword,
         },
@@ -89,7 +86,7 @@ module.exports = {
 
       res.status(200).json({
         message: "Sukses Ambil Data",
-        data: program,
+        data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
       });
     } catch (error) {
       res.status(500).json({
