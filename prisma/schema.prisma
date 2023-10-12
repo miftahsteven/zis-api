@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://userziswaf:Zis321@@@149.129.225.79:234/ziswafApp"
+}
+
+model banners {
+  banners_id         Int      @id @default(autoincrement())
+  banners_name       String?  @db.VarChar(255)
+  banners_path       String?  @db.Text
+  banners_program_id Int?
+  program            program?
+}
+
+model customers {
+  customer_id       Int     @id @default(autoincrement())
+  customer_user_id  Int
+  customer_no_imkas String? @db.VarChar(15)
+  customer_durasi   Int?
+  customer_reminder Int?    @db.SmallInt
+  customer_status   Int?    @default(1) @db.SmallInt
+}
+
+model institusi {
+  institusi_id      Int       @id @default(autoincrement())
+  institusi_nama    String    @db.VarChar(255)
+  institusi_user_id Int?
+  institusi_no_hp   String?   @db.VarChar(15)
+  institusi_status  Int?      @default(1) @db.SmallInt
+  user              user?     @relation(fields: [institusi_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "institusi_FK")
+  program           program[]
+
+  @@index([institusi_user_id], map: "institusi_FK")
+}
+
+model program {
+  program_id            Int       @id @default(autoincrement())
+  program_kode          String?   @db.VarChar(10)
+  program_title         String    @db.VarChar(100)
+  program_short_desc    String?   @db.Text
+  program_start_date    DateTime? @db.DateTime(0)
+  program_end_date      DateTime? @db.DateTime(0)
+  program_description   String?   @db.Text
+  program_institusi_id  Int
+  program_target_amount BigInt
+  program_create        DateTime? @default(now()) @db.Timestamp(0)
+  program_status        Int?      @default(1) @db.SmallInt
+  program_isheadline    Int?      @default(0) @db.SmallInt
+  program_institusi     institusi @relation(fields: [program_institusi_id], references: [institusi_id])
+  program_banner        banners   @relation(fields: [program_banner_id], references: [banners_id])
+
+  program_banner_id Int @unique
+}
+
+model user {
+  user_id        Int              @id @default(autoincrement())
+  username       String           @unique(map: "user_UN") @db.VarChar(255)
+  user_password  String           @db.VarChar(100)
+  user_nama      String?          @db.VarChar(100)
+  user_phone     String?          @unique(map: "user_UN_2") @db.VarChar(100)
+  user_status    Int?             @default(0) @db.SmallInt
+  user_token     String?          @db.Text
+  user_reg_date  DateTime         @default(now()) @db.Timestamp(0)
+  institusi      institusi[]
+  type           UserType?        @relation(fields: [user_type], references: [user_type_id])
+  user_type      Int?             @default(0)
+  password_token password_token[]
+}
+
+model password_token {
+  id      Int    @id @default(autoincrement())
+  user    user   @relation(fields: [user_id], references: [user_id])
+  user_id Int    @unique
+  token   String @db.VarChar(255)
+}
+
+model UserType {
+  user_type_id   Int    @id @default(autoincrement())
+  user_type_name String @db.VarChar(100)
+  user           user[]
+
+  @@map("user_type")
+}
+
+model vendor {
+  vendor_id            Int     @id @default(autoincrement())
+  vendor_user_id       Int
+  vendor_address       String? @db.Text
+  vendor_ktp           String? @db.VarChar(255)
+  vendor_kk            String? @db.VarChar(255)
+  vendor_kontak_name   String? @db.VarChar(255)
+  vendor_kontak_number String? @db.VarChar(15)
+  vendor_bank_name     String? @db.VarChar(255)
+  vendor_bank_number   Int?
+  vendor_bank_id       Int?
+}

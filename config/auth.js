@@ -9,33 +9,30 @@ const authentication = (req, res, next) => {
       const token = headerToken.split(" ")[1];
       const payload = verify(token);
       req.user = payload;
+      req.user_id = payload.user_id;
       return next();
     }
     //throw ApiError.badRequest("Login Ulang !");
-    res.send({ 
+    return res.status(401).send({
       success: false,
-      code: 100,  
       message: "ERROR : ANDA HARUS LOGIN ULANG",
     });
   } catch (error) {
     if (error instanceof TokenExpiredError) {
-      //next(ApiError.unauthorized("login ulang !"));
-      res.send({ 
+      return res.status(401).send({
         success: false,
-        code: 101,  
+        code: 101,
         message: "ERROR : LOGIN EXPIRED",
       });
     }
     if (error instanceof JsonWebTokenError) {
-      //next(ApiError.badRequest("Anda Harus login Terlebih Dahulu !"));
       console.log("error", error.message);
-      // res.send({ 
+      // res.send({
       //   success: false,
-      //   code: 101,  
+      //   code: 101,
       //   message: "ERROR : LOGIN EXPIRED",
       // });
     }
-    //next(error);
   }
 };
 
@@ -50,9 +47,7 @@ const authorization =
       userRolesArray.push(userRoles[i]);
       // console.log(userRoles[i]);
     }
-    const intersection = roles.filter((element) =>
-      userRolesArray.includes(element)
-    );
+    const intersection = roles.filter((element) => userRolesArray.includes(element));
     // console.log(intersection);
     // if (roles.includes(intersection)) {
     if (intersection.length > 0) {

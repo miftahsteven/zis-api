@@ -1,7 +1,7 @@
-const user = require('./controller-user');
-const home = require('./controller-home');
-const mustahiq = require('./controller-mustahiq');
+const user = require("./controller-user");
+const home = require("./controller-home");
 
-module.exports ={
-	user, home, mustahiq
+module.exports = {
+  user,
+  home,
 };
