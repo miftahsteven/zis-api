@@ -58,7 +58,7 @@ model program {
 model user {
   user_id        Int              @id @default(autoincrement())
   username       String           @unique(map: "user_UN") @db.VarChar(255)
-  user_password  String           @db.VarChar(100)
+  user_password  String           @db.VarChar(255)
   user_nama      String?          @db.VarChar(100)
   user_phone     String?          @unique(map: "user_UN_2") @db.VarChar(100)
   user_status    Int?             @default(0) @db.SmallInt

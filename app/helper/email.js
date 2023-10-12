@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async ({ email, html }) => {
+const sendEmail = async ({ email, html, subject }) => {
   const transporter = nodemailer.createTransport({
     host: "mail.zisindosat.id",
     port: 465,
@@ -10,11 +10,18 @@ const sendEmail = async ({ email, html }) => {
       pass: "ziswaf2019",
     },
   });
+  // const transporter = nodemailer.createTransport({
+  //   service: "gmail",
+  //   auth: {
+  //     user: "ikhyan7@gmail.com",
+  //     pass: "hdra syso vwhd vmay",
+  //   },
+  // });
 
   const info = await transporter.sendMail({
     from: "admin@zisindosat.id",
     to: email,
-    subject: "Pendaftaran Ziswaf INDOSAT",
+    subject,
     html: html,
   });
 
@@ -28,17 +35,18 @@ const generateTemplate = ({ email, password }) => {
   const url = `https://portal.zisindosat.id/verifikasi?akun=${encodedEmail}`;
 
   const content = `
-   Assalamu'alaikum, Wr Wb. \n
-   Terima Kasih Telah Mendaftar sebagai Mustahiq Ke Ziswaf INDOSAT. \n
-   Berikut ini adalah detail login anda :\n
-   Username : ${email}\n
-   Password : ${password}\n
-   Untuk melanjutkan proses registrasi dan agar anda bisa melakukan login, silahkan lakukan Verifikasi terlebih dahulu, dengan melakukan klik pada link berikut\n
-   <br />
-   <a href="${url}">VERIFIKASI AKUN</a>
-   <br />
-   Terima kasih atas partisipasi anda.
-   Wassalamu'alaikum Wr, Wb
+  <p>Assalamu'alaikum, Wr Wb.</p>
+  <p>Terima Kasih Telah Mendaftar Ke Ziswaf INDOSAT.</p>
+  <p>Berikut ini adalah detail login anda :</p>
+  <p>Username: ${email}</p>
+  <p>Password: ${password}</p>
+  <p>Untuk melanjutkan proses registrasi dan agar anda bisa melakukan login, silahkan lakukan Verifikasi terlebih
+     dahulu, dengan melakukan klik pada link berikut</p>
+  <br />
+  <a href="${url}"><strong>VERIFIKASI AKUN</strong></a>
+  <br />
+  <p>Terima kasih atas partisipasi anda.</p>
+  <p>Wassalamu'alaikum Wr, Wb</p>
 `;
 
   return content;
@@ -46,18 +54,17 @@ const generateTemplate = ({ email, password }) => {
 
 const generateTemplateForgotEmail = ({ email, token }) => {
   const encodedEmail = Buffer.from(email).toString("base64");
-  const url = `https://portal.zisindosat.id/reset-password?akun=${encodedEmail}=token${token}`;
-
-  console.log({ encodedEmail, token });
+  const url = `https://portal.zisindosat.id/reset-password?akun=${encodedEmail}&token=${token}`;
 
   const content = `
-    Assalamu'alaikum, Wr Wb. \n
-    Anda telah melakukan permintaan untuk melakukan reset password. \n
-    Untuk melanjutkan proses reset password, silahkan klik link berikut: \n
-    <br />
-    <a href="${url}">RESET PASSWORD</a>
-    <br />
-    Wassalamu'alaikum Wr, Wb
+  <p>Assalamu'alaikum, Wr Wb.</p>
+  <p>Anda telah melakukan permintaan untuk melakukan reset password.</p>
+  <p>Untuk melanjutkan proses reset password, silahkan klik link berikut:</p>
+  <br />
+  <a href="${url}"><strong>RESET PASSWORD</strong></a>
+  <br />
+  <p>Terima kasih atas partisipasi anda.</p>
+  <p>Wassalamu'alaikum Wr, Wb</p>
  `;
 
   return content;

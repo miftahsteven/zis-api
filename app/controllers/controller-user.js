@@ -97,10 +97,9 @@ module.exports = {
         });
       }
 
-      const currentUser = await prisma.user.findUnique({
+      const currentUser = await prisma.user.findFirst({
         where: {
-          username: body.data.email,
-          user_phone: body.data.phone,
+          OR: [{ username: body.data.email }, { user_phone: body.data.phone }],
         },
       });
 
@@ -130,6 +129,7 @@ module.exports = {
       const msgId = await sendEmail({
         email: body.data.email,
         html: templateEmail,
+        subject: "Pendaftaran Ziswaf INDOSAT",
       });
 
       if (!msgId) {
@@ -276,6 +276,7 @@ module.exports = {
       const msgId = await sendEmail({
         email: user.username,
         html: templateEmail,
+        subject: "Reset Password Ziswaf INDOSAT",
       });
 
       if (!msgId) {
