@@ -11,11 +11,12 @@ module.exports = {
     try {
       const page = parseInt(req.query.page) || 1;
       const perPage = parseInt(req.query.perPage) || 10;
+      const status = parseInt(req.query.status) || 2;
       const skip = (page - 1) * perPage;
       const keyword = req.query.keyword || "";
 
       const params = {
-        program_status: 1,
+        program_status: status,
         program_title: {
           contains: keyword,
         },
@@ -48,7 +49,7 @@ module.exports = {
           total: count,
           page,
           hasNext: count > page * perPage,
-          count,
+          totalPage: Math.ceil(count / perPage),
         },
       });
     } catch (error) {
@@ -117,6 +118,7 @@ module.exports = {
         program_end_date: new Date(req.body.program_end_date),
         program_start_date: new Date(req.body.program_start_date),
         program_target_amount: parseInt(req.body.program_target_amount),
+        program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
 
       let errorObj = {};

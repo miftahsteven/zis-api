@@ -15,13 +15,6 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 5000000 },
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    if (!ext.match(/\.(jpg|jpeg|png)\b/)) {
-      return cb(new Error("File harus berupa gambar"));
-    }
-    cb(null, true);
-  },
 });
 
 module.exports = {

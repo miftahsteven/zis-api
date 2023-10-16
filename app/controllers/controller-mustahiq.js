@@ -1,4 +1,3 @@
-const { z } = require("zod");
 const { prisma } = require("../../prisma/client");
 const fs = require("fs");
 
@@ -38,7 +37,26 @@ module.exports = {
         bank_name,
         bank_number,
         imkas_number,
+        is_institusi,
+        institusi_nama,
+        institusi_no_hp,
       } = req.body;
+
+      if (is_institusi) {
+        await prisma.user.update({
+          where: {
+            user_id: userId,
+          },
+          data: {
+            institusi: {
+              create: {
+                institusi_nama,
+                institusi_no_hp,
+              },
+            },
+          },
+        });
+      }
 
       const mustahiqResult = await prisma.mustahiq.create({
         data: {
