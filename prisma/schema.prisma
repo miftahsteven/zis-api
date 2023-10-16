@@ -37,44 +37,66 @@ model institusi {
 }
 
 model program {
-  program_id            Int       @id @default(autoincrement())
-  program_kode          String?   @db.VarChar(10)
-  program_title         String    @db.VarChar(100)
-  program_short_desc    String?   @db.Text
-  program_start_date    DateTime? @db.DateTime(0)
-  program_end_date      DateTime? @db.DateTime(0)
-  program_description   String?   @db.Text
-  program_institusi_id  Int
+  program_id            Int        @id @default(autoincrement())
+  program_kode          String?    @db.VarChar(10)
+  program_title         String     @db.VarChar(100)
+  program_short_desc    String?    @db.Text
+  program_start_date    DateTime?  @db.DateTime(0)
+  program_end_date      DateTime?  @db.DateTime(0)
+  program_description   String?    @db.Text
+  program_institusi_id  Int?
   program_target_amount BigInt
-  program_create        DateTime? @default(now()) @db.Timestamp(0)
-  program_status        Int?      @default(1) @db.SmallInt
-  program_isheadline    Int?      @default(0) @db.SmallInt
-  program_institusi     institusi @relation(fields: [program_institusi_id], references: [institusi_id])
-  program_banner        banners   @relation(fields: [program_banner_id], references: [banners_id])
+  program_create        DateTime?  @default(now()) @db.Timestamp(0)
+  program_status        Int?       @default(1) @db.SmallInt
+  program_isheadline    Int?       @default(0) @db.SmallInt
+  program_banner_id     Int        @unique
+  program_banner        banners    @relation(fields: [program_banner_id], references: [banners_id])
+  program_institusi     institusi? @relation(fields: [program_institusi_id], references: [institusi_id])
 
-  program_banner_id Int @unique
+  user    user @relation(fields: [user_id], references: [user_id])
+  user_id Int
 }
 
 model user {
-  user_id        Int              @id @default(autoincrement())
-  username       String           @unique(map: "user_UN") @db.VarChar(255)
-  user_password  String           @db.VarChar(255)
-  user_nama      String?          @db.VarChar(100)
-  user_phone     String?          @unique(map: "user_UN_2") @db.VarChar(100)
-  user_status    Int?             @default(0) @db.SmallInt
-  user_token     String?          @db.Text
-  user_reg_date  DateTime         @default(now()) @db.Timestamp(0)
+  user_id        Int             @id @default(autoincrement())
+  username       String          @unique(map: "user_UN") @db.VarChar(255)
+  user_password  String          @db.VarChar(255)
+  user_nama      String?         @db.VarChar(100)
+  user_phone     String?         @unique(map: "user_UN_2") @db.VarChar(100)
+  user_type      Int?            @default(0)
+  user_status    Int?            @default(0) @db.SmallInt
+  user_token     String?         @db.Text
+  user_reg_date  DateTime        @default(now()) @db.Timestamp(0)
   institusi      institusi[]
-  type           UserType?        @relation(fields: [user_type], references: [user_type_id])
-  user_type      Int?             @default(0)
-  password_token password_token[]
+  password_token password_token?
+  type           UserType?       @relation(fields: [user_type], references: [user_type_id])
+  program        program[]
+
+  mustahiq    mustahiq? @relation(fields: [mustahiq_id], references: [id])
+  mustahiq_id Int?      @unique
+
+  @@index([user_type], map: "user_user_type_fkey")
+}
+
+model mustahiq {
+  id                       Int     @id @default(autoincrement())
+  address                  String  @db.Text
+  ktp_url                  String  @db.VarChar(255)
+  kk_url                   String  @db.VarChar(255)
+  emergency_contact_name   String  @db.VarChar(255)
+  emergency_contact_number String  @db.VarChar(15)
+  bank_name                String  @db.VarChar(255)
+  bank_number              String  @db.VarChar(255)
+  bank_account_name        String  @db.VarChar(255)
+  imkas_number             String? @db.VarChar(255)
+  user                     user?
 }
 
 model password_token {
   id      Int    @id @default(autoincrement())
-  user    user   @relation(fields: [user_id], references: [user_id])
   user_id Int    @unique
   token   String @db.VarChar(255)
+  user    user   @relation(fields: [user_id], references: [user_id])
 }
 
 model UserType {
@@ -96,4 +118,9 @@ model vendor {
   vendor_bank_name     String? @db.VarChar(255)
   vendor_bank_number   Int?
   vendor_bank_id       Int?
+}
+
+model test_table {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  created_at DateTime @default(now()) @db.Timestamp(0)
 }

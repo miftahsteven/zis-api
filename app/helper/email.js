@@ -2,21 +2,19 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async ({ email, html, subject }) => {
   const transporter = nodemailer.createTransport({
-    host: "mail.zisindosat.id",
+    host: "smtp.hostinger.com",
     port: 465,
     secure: true,
     auth: {
       user: "admin@zisindosat.id",
-      pass: "ziswaf2019",
+      pass: "Ziswaf_2019",
     },
   });
-  // const transporter = nodemailer.createTransport({
-  //   service: "gmail",
-  //   auth: {
-  //     user: "ikhyan7@gmail.com",
-  //     pass: "hdra syso vwhd vmay",
-  //   },
-  // });
+  // user: admin@zisindosat.id
+  // pass: Ziswaf_2019
+  // Incoming server (IMAP) | imap.hostinger.com | 993
+  // Outgoing server (SMTP) | smtp.hostinger.com | 465
+  // Incoming server (POP) | pop.hostinger.com | 995
 
   const info = await transporter.sendMail({
     from: "admin@zisindosat.id",

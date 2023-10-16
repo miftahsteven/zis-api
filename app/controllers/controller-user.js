@@ -12,6 +12,12 @@ module.exports = {
     try {
       const { username, password } = req.body;
 
+      if (!username || !password) {
+        return res.status(400).json({
+          message: "Username atau Password Salah",
+        });
+      }
+
       const user = await prisma.user.findUnique({
         where: {
           username,
@@ -255,7 +261,7 @@ module.exports = {
         });
       }
 
-      const randomToken = crypto.randomBytes(32).toString("hex");
+      const randomToken = crypto.randomBytes(32).toString("base64");
       console.log(randomToken);
 
       await prisma.password_token.upsert({
@@ -409,6 +415,10 @@ module.exports = {
       const user = await prisma.user.findUnique({
         where: {
           user_id: userId,
+        },
+        include: {
+          institusi: true,
+          mustahiq: true,
         },
       });
 

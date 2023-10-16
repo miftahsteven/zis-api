@@ -100,14 +100,11 @@ module.exports = {
     try {
       const schema = z.object({
         program_title: z.string({ required_error: "Judul Harus Diisi" }).min(3, "Judul Terlalu Pendek").max(255),
-        program_short_desc: z.string({ required_error: "Deskripsi Singkat Harus Diisi" }).min(3).max(255),
+        program_short_desc: z.string().optional(),
         program_start_date: z.date({ required_error: "Tanggal Mulai Harus Diisi" }),
         program_end_date: z.date({ required_error: "Tanggal Berakhir Harus Diisi" }),
         program_description: z.string({ required_error: "Deskripsi Harus Diis" }).min(3),
-        program_institusi_id: z.number({
-          required_error: "Institusi Harus Diisi",
-          invalid_type_error: "Institusi Harus Diisi",
-        }),
+        program_institusi_id: z.number().optional(),
         program_target_amount: z.number({
           required_error: "Target Dana Harus Diisi",
           invalid_type_error: "Target Dana Harus Diisi",
@@ -120,7 +117,6 @@ module.exports = {
         program_end_date: new Date(req.body.program_end_date),
         program_start_date: new Date(req.body.program_start_date),
         program_target_amount: parseInt(req.body.program_target_amount),
-        program_institusi_id: parseInt(req.body.program_institusi_id),
       });
 
       let errorObj = {};
@@ -159,21 +155,32 @@ module.exports = {
 
       const { program_institusi_id, ...rest } = body.data;
 
+      const userId = req.user_id;
+
       const program = await prisma.program.create({
         data: {
           ...rest,
+          user: {
+            connect: {
+              user_id: userId,
+            },
+          },
           program_banner: {
             create: {
               banners_name: rest.program_title,
-              banners_path: `uploads/banners/${file.filename}`,
+              banners_path: `uploads/${file.filename}`,
             },
           },
           program_kode: nanoid(),
-          program_institusi: {
-            connect: {
-              institusi_id: program_institusi_id,
-            },
-          },
+          ...(program_institusi_id
+            ? {
+                program_institusi: {
+                  connect: {
+                    institusi_id: program_institusi_id,
+                  },
+                },
+              }
+            : {}),
         },
       });
 
