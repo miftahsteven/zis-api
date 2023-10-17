@@ -53,8 +53,9 @@ model program {
   program_banner        banners    @relation(fields: [program_banner_id], references: [banners_id])
   program_institusi     institusi? @relation(fields: [program_institusi_id], references: [institusi_id])
 
-  user    user @relation(fields: [user_id], references: [user_id])
-  user_id Int
+  user         user           @relation(fields: [user_id], references: [user_id])
+  user_id      Int
+  transactions transactions[]
 }
 
 model user {
@@ -72,8 +73,9 @@ model user {
   type           UserType?       @relation(fields: [user_type], references: [user_type_id])
   program        program[]
 
-  mustahiq    mustahiq? @relation(fields: [mustahiq_id], references: [id])
-  mustahiq_id Int?      @unique
+  mustahiq     mustahiq?      @relation(fields: [mustahiq_id], references: [id])
+  mustahiq_id  Int?           @unique
+  transactions transactions[]
 
   @@index([user_type], map: "user_user_type_fkey")
 }
@@ -123,4 +125,15 @@ model vendor {
 model test_table {
   id         Int      @id @default(autoincrement()) @db.UnsignedInt
   created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model transactions {
+  id             Int     @id @default(autoincrement())
+  program        program @relation(fields: [program_id], references: [program_id])
+  program_id     Int
+  user           user    @relation(fields: [user_id], references: [user_id])
+  user_id        Int
+  amount         Int     @db.MediumInt
+  payment_method String  @db.VarChar(100)
+  evidence       String  @db.Text
 }
