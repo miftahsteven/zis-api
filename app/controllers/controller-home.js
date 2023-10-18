@@ -27,24 +27,53 @@ module.exports = {
           where: params,
         }),
         prisma.program.findMany({
+          orderBy: {
+            program_id: "asc",
+          },
           where: params,
           include: {
-            program_institusi: true,
-            program_banner: true,
+            program_institusi: {
+              select: {
+                institusi_id: true,
+                institusi_nama: true,
+              },
+            },
+            program_banner: {
+              select: {
+                banners_path: true,
+                banners_id: true,
+              },
+            },
           },
           skip,
           take: perPage,
         }),
       ]);
 
-      res.send({
-        message: "Sukses Ambil Data",
-        data: program.map((item) => {
+      const programResult = await Promise.all(
+        program.map(async (item) => {
+          const total_donation = await prisma.transactions.aggregate({
+            where: {
+              program_id: item.program_id,
+            },
+            _sum: {
+              amount: true,
+            },
+          });
+
           return {
             ...item,
             program_target_amount: Number(item.program_target_amount),
+            total_donation: total_donation._sum.amount || 0,
           };
-        }),
+        })
+      );
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: programResult,
         pagination: {
           total: count,
           page,
@@ -69,15 +98,38 @@ module.exports = {
         });
       }
 
-      const program = await prisma.program.findUnique({
-        where: {
-          program_id: parseInt(id),
-        },
-        include: {
-          program_banner: true,
-          program_institusi: true,
-        },
-      });
+      const [program, totalDonation] = await prisma.$transaction([
+        prisma.program.findUnique({
+          where: {
+            program_id: parseInt(id),
+          },
+          include: {
+            program_banner: true,
+            program_institusi: true,
+            transactions: {
+              select: {
+                amount: true,
+                id: true,
+                user: {
+                  select: {
+                    user_id: true,
+                    user_nama: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+
+        prisma.transactions.aggregate({
+          where: {
+            program_id: parseInt(id),
+          },
+          _sum: {
+            amount: true,
+          },
+        }),
+      ]);
 
       if (!program) {
         return res.status(404).json({
@@ -87,12 +139,18 @@ module.exports = {
 
       res.status(200).json({
         message: "Sukses Ambil Data",
-        data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
+        data: JSON.parse(
+          JSON.stringify({
+            ...program,
+            program_target_amount: Number(program.program_target_amount),
+            total_donation: totalDonation._sum.amount || 0,
+          })
+        ),
       });
     } catch (error) {
       res.status(500).json({
         message: "Terjadi Kesalahan Server",
-        stack: error,
+        stack: error?.message,
       });
     }
   },
@@ -195,6 +253,43 @@ module.exports = {
       res.status(200).json({
         message: "Sukses Tambah Program",
         data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
+  async getBanner(req, res) {
+    try {
+      const banner = await prisma.program.findMany({
+        orderBy: {
+          program_id: "asc",
+        },
+        where: {
+          program_status: 2,
+          program_isheadline: 1,
+        },
+        include: {
+          program_banner: {
+            select: {
+              banners_path: true,
+              banners_id: true,
+            },
+          },
+        },
+        take: 5,
+      });
+
+      return res.status(200).json({
+        message: "Sukses Ambil Data",
+        data: banner.map((item) => ({
+          program_id: item.program_id,
+          program_banner: {
+            banners_path: item.program_banner.banners_path,
+          },
+        })),
       });
     } catch (error) {
       res.status(500).json({

@@ -136,4 +136,5 @@ model transactions {
   amount         Int     @db.MediumInt
   payment_method String  @db.VarChar(100)
   evidence       String  @db.Text
+  status         String  @default("pending") @db.VarChar(100)
 }

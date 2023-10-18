@@ -75,6 +75,12 @@ const validateFields = async (req, res, next) => {
       });
       body.error = errorObj;
     }
+    if (!body.success) {
+      return res.status(400).json({
+        message: "Beberapa Field Harus Diisi",
+        error: errorObj,
+      });
+    }
     next();
   } catch (error) {
     return res.status(500).json({
