@@ -222,7 +222,7 @@ module.exports = {
           ...rest,
           user: {
             connect: {
-              user_id: userId,
+              user_id: Number(userId),
             },
           },
           program_banner: {
@@ -249,6 +249,24 @@ module.exports = {
           message: "Gagal Tambah Program",
         });
       }
+
+      await prisma.notification.create({
+        data: {
+          user: {
+            connect: {
+              user_id: Number(userId),
+            },
+          },
+          description: "Program Anda Telah Berhasil Dibuat, Silahkan Tunggu Konfirmasi Dari Admin",
+          title: "Program Baru",
+          type: "program",
+          program: {
+            connect: {
+              program_id: program.program_id,
+            },
+          },
+        },
+      });
 
       res.status(200).json({
         message: "Sukses Tambah Program",

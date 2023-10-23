@@ -37,25 +37,28 @@ model institusi {
 }
 
 model program {
-  program_id            Int        @id @default(autoincrement())
-  program_kode          String?    @db.VarChar(10)
-  program_title         String     @db.VarChar(100)
-  program_short_desc    String?    @db.Text
-  program_start_date    DateTime?  @db.DateTime(0)
-  program_end_date      DateTime?  @db.DateTime(0)
-  program_description   String?    @db.Text
+  program_id            Int            @id @default(autoincrement())
+  program_kode          String?        @db.VarChar(10)
+  program_title         String         @db.VarChar(100)
+  program_short_desc    String?        @db.Text
+  program_start_date    DateTime?      @db.DateTime(0)
+  program_end_date      DateTime?      @db.DateTime(0)
+  program_description   String?        @db.Text
   program_institusi_id  Int?
   program_target_amount BigInt
-  program_create        DateTime?  @default(now()) @db.Timestamp(0)
-  program_status        Int?       @default(1) @db.SmallInt
-  program_isheadline    Int?       @default(0) @db.SmallInt
-  program_banner_id     Int        @unique
-  program_banner        banners    @relation(fields: [program_banner_id], references: [banners_id])
-  program_institusi     institusi? @relation(fields: [program_institusi_id], references: [institusi_id])
+  program_create        DateTime?      @default(now()) @db.Timestamp(0)
+  program_status        Int?           @default(1) @db.SmallInt
+  program_isheadline    Int?           @default(0) @db.SmallInt
+  program_banner_id     Int            @unique
+  user_id               Int
+  program_banner        banners        @relation(fields: [program_banner_id], references: [banners_id])
+  program_institusi     institusi?     @relation(fields: [program_institusi_id], references: [institusi_id])
+  user                  user           @relation(fields: [user_id], references: [user_id])
+  transactions          transactions[]
+  notification          notification[]
 
-  user         user           @relation(fields: [user_id], references: [user_id])
-  user_id      Int
-  transactions transactions[]
+  @@index([program_institusi_id], map: "program_program_institusi_id_fkey")
+  @@index([user_id], map: "program_user_id_fkey")
 }
 
 model user {
@@ -68,16 +71,34 @@ model user {
   user_status    Int?            @default(0) @db.SmallInt
   user_token     String?         @db.Text
   user_reg_date  DateTime        @default(now()) @db.Timestamp(0)
+  mustahiq_id    Int?            @unique
   institusi      institusi[]
   password_token password_token?
-  type           UserType?       @relation(fields: [user_type], references: [user_type_id])
   program        program[]
-
-  mustahiq     mustahiq?      @relation(fields: [mustahiq_id], references: [id])
-  mustahiq_id  Int?           @unique
-  transactions transactions[]
+  transactions   transactions[]
+  mustahiq       mustahiq?       @relation(fields: [mustahiq_id], references: [id])
+  type           UserType?       @relation(fields: [user_type], references: [user_type_id])
+  notifications  notification[]
 
   @@index([user_type], map: "user_user_type_fkey")
+}
+
+model notification {
+  id          Int    @id @default(autoincrement())
+  title       String @db.VarChar(255)
+  description String @db.Text
+  type        String @db.VarChar(255) // "program" | "transaction"
+
+  created_at DateTime @default(now()) @db.Timestamp(0)
+
+  program    program? @relation(fields: [program_id], references: [program_id])
+  program_id Int?
+
+  transaction    transactions? @relation(fields: [transaction_id], references: [id])
+  transaction_id Int?
+
+  user_id Int
+  user    user @relation(fields: [user_id], references: [user_id])
 }
 
 model mustahiq {
@@ -89,8 +110,8 @@ model mustahiq {
   emergency_contact_number String  @db.VarChar(15)
   bank_name                String  @db.VarChar(255)
   bank_number              String  @db.VarChar(255)
-  bank_account_name        String  @db.VarChar(255)
   imkas_number             String? @db.VarChar(255)
+  bank_account_name        String  @db.VarChar(255)
   user                     user?
 }
 
@@ -128,15 +149,19 @@ model test_table {
 }
 
 model transactions {
-  id             Int     @id @default(autoincrement())
-  program        program @relation(fields: [program_id], references: [program_id])
+  id             Int            @id @default(autoincrement())
   program_id     Int
-  user           user    @relation(fields: [user_id], references: [user_id])
   user_id        Int
-  amount         Int     @db.MediumInt
-  payment_method String  @db.VarChar(100)
-  evidence       String  @db.Text
-  status         String  @default("pending") @db.VarChar(100)
+  amount         Int            @db.MediumInt
+  payment_method String         @db.VarChar(100)
+  evidence       String         @db.Text
+  status         String         @default("pending") @db.VarChar(100)
+  program        program        @relation(fields: [program_id], references: [program_id])
+  user           user           @relation(fields: [user_id], references: [user_id])
+  notification   notification[]
+
+  @@index([program_id], map: "transactions_program_id_fkey")
+  @@index([user_id], map: "transactions_user_id_fkey")
 }
 
 model bank_account {
@@ -147,27 +172,28 @@ model bank_account {
 }
 
 model ebs_staging {
-  id             Int     @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   account_number Int
-  trans_ref      String? @db.VarChar(50)
-  bank_date      String? @db.VarChar(8)
-  state_num      String? @db.VarChar(25)
-  currency       String? @db.VarChar(3)
-  ob_amount      String? @db.VarChar(200)
-  ob_ind         String? @db.VarChar(50)
-  eb_amount      String? @db.VarChar(200)
-  eb_ind         String? @db.VarChar(50)
-  trans_date     String? @db.VarChar(8)
-  trans_type     String? @db.VarChar(27)
-  trans_amount   String? @db.VarChar(27)
-  trans_id       String? @db.VarChar(27)
-  text_info      String? @db.VarChar(200)
-  ebs_info1      String? @db.VarChar(50)
-  ebs_info2      String? @db.VarChar(50)
-  ebs_info3      String? @db.VarChar(50)
-  ebs_filename   String? @db.VarChar(255)
+  trans_ref      String?      @db.VarChar(50)
+  bank_date      String?      @db.VarChar(8)
+  state_num      String?      @db.VarChar(25)
+  currency       String?      @db.VarChar(3)
+  ob_amount      String?      @db.VarChar(200)
+  ob_ind         String?      @db.VarChar(50)
+  eb_amount      String?      @db.VarChar(200)
+  eb_ind         String?      @db.VarChar(50)
+  trans_date     String?      @db.VarChar(8)
+  trans_type     String?      @db.VarChar(27)
+  trans_amount   String?      @db.VarChar(27)
+  trans_id       String?      @db.VarChar(27)
+  text_info      String?      @db.VarChar(200)
+  ebs_info1      String?      @db.VarChar(50)
+  ebs_info2      String?      @db.VarChar(50)
+  ebs_info3      String?      @db.VarChar(50)
+  ebs_filename   String?      @db.VarChar(255)
+  bank_account   bank_account @relation(fields: [account_number], references: [id])
 
-  bank_account bank_account @relation(fields: [account_number], references: [id])
+  @@index([account_number], map: "ebs_staging_account_number_fkey")
 }
 
 model tccode {
@@ -180,18 +206,17 @@ model tccode {
 
 model athead {
   id     Int     @id @default(autoincrement())
-  tccode tccode  @relation(fields: [ccode], references: [ccode])
   ccode  String
   fyear  String
   docnr  String
   atgla  atgla[]
+  tccode tccode  @relation(fields: [ccode], references: [ccode])
 
   @@unique([ccode, fyear, docnr])
 }
 
 model atgla {
   id     Int    @id @default(autoincrement())
-  athead athead @relation(fields: [ccode, fyear, docnr], references: [ccode, fyear, docnr])
   ccode  String
   fyear  String
   docnr  String
@@ -200,4 +225,7 @@ model atgla {
   posdt  String
   docdt  String
   dtype  String
+  athead athead @relation(fields: [ccode, fyear, docnr], references: [ccode, fyear, docnr])
+
+  @@index([ccode, fyear, docnr], map: "atgla_ccode_fyear_docnr_fkey")
 }

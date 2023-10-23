@@ -261,7 +261,7 @@ module.exports = {
         });
       }
 
-      const randomToken = crypto.randomBytes(32).toString("base64");
+      const randomToken = crypto.randomBytes(32).toString("hex");
       console.log(randomToken);
 
       await prisma.password_token.upsert({
@@ -435,6 +435,31 @@ module.exports = {
       return res.status(200).json({
         message: "Sukses",
         data: cleanUser,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
+  async getNotifications(req, res) {
+    try {
+      const userId = req.user_id;
+
+      const notifications = await prisma.notification.findMany({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          program: true,
+          transaction: true,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: notifications,
       });
     } catch (error) {
       return res.status(500).json({

@@ -33,7 +33,7 @@ module.exports = {
         });
       }
 
-      await prisma.transactions.create({
+      const trx = await prisma.transactions.create({
         data: {
           amount: Number(amount),
           evidence: "uploads/" + evidence.filename,
@@ -46,6 +46,24 @@ module.exports = {
           program: {
             connect: {
               program_id: Number(programId),
+            },
+          },
+        },
+      });
+
+      await prisma.notification.create({
+        data: {
+          user: {
+            connect: {
+              user_id: Number(userId),
+            },
+          },
+          description: "Transaksi berhasil, silahkan tunggu konfirmasi dari admin",
+          title: "Konfirmasi Transaksi Donasi",
+          type: "transaction",
+          transaction: {
+            connect: {
+              id: trx.id,
             },
           },
         },
