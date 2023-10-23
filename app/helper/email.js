@@ -2,12 +2,10 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async ({ email, html, subject }) => {
   const transporter = nodemailer.createTransport({
-    host: "smtp.hostinger.com",
-    port: 465,
-    secure: true,
+    service: "gmail",
     auth: {
       user: "admin@zisindosat.id",
-      pass: "Ziswaf_2019",
+      pass: "ziswaf2019",
     },
   });
   // user: admin@zisindosat.id

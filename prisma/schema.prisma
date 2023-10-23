@@ -138,3 +138,66 @@ model transactions {
   evidence       String  @db.Text
   status         String  @default("pending") @db.VarChar(100)
 }
+
+model bank_account {
+  id          Int           @id @default(autoincrement())
+  bank_name   String        @db.VarChar(255)
+  bank_number String        @db.VarChar(255)
+  ebs_staging ebs_staging[]
+}
+
+model ebs_staging {
+  id             Int     @id @default(autoincrement())
+  account_number Int
+  trans_ref      String? @db.VarChar(50)
+  bank_date      String? @db.VarChar(8)
+  state_num      String? @db.VarChar(25)
+  currency       String? @db.VarChar(3)
+  ob_amount      String? @db.VarChar(200)
+  ob_ind         String? @db.VarChar(50)
+  eb_amount      String? @db.VarChar(200)
+  eb_ind         String? @db.VarChar(50)
+  trans_date     String? @db.VarChar(8)
+  trans_type     String? @db.VarChar(27)
+  trans_amount   String? @db.VarChar(27)
+  trans_id       String? @db.VarChar(27)
+  text_info      String? @db.VarChar(200)
+  ebs_info1      String? @db.VarChar(50)
+  ebs_info2      String? @db.VarChar(50)
+  ebs_info3      String? @db.VarChar(50)
+  ebs_filename   String? @db.VarChar(255)
+
+  bank_account bank_account @relation(fields: [account_number], references: [id])
+}
+
+model tccode {
+  id     Int      @id @default(autoincrement())
+  ccode  String   @unique
+  cname  String
+  cncode String
+  athead athead[]
+}
+
+model athead {
+  id     Int     @id @default(autoincrement())
+  tccode tccode  @relation(fields: [ccode], references: [ccode])
+  ccode  String
+  fyear  String
+  docnr  String
+  atgla  atgla[]
+
+  @@unique([ccode, fyear, docnr])
+}
+
+model atgla {
+  id     Int    @id @default(autoincrement())
+  athead athead @relation(fields: [ccode, fyear, docnr], references: [ccode, fyear, docnr])
+  ccode  String
+  fyear  String
+  docnr  String
+  clrdt  String
+  docit  String
+  posdt  String
+  docdt  String
+  dtype  String
+}
