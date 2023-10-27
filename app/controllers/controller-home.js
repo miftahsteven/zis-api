@@ -9,17 +9,21 @@ const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW
 module.exports = {
   async getAllProgram(req, res) {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const perPage = parseInt(req.query.perPage) || 10;
-      const status = parseInt(req.query.status) || 2;
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 2);
       const skip = (page - 1) * perPage;
       const keyword = req.query.keyword || "";
+      const category = req.query.category || "";
+      const sortBy = req.query.sortBy || "program_id";
+      const sortType = req.query.order || "asc";
 
       const params = {
         program_status: status,
         program_title: {
           contains: keyword,
         },
+        ...(category ? { program_category_id: Number(category) } : {}),
       };
 
       const [count, program] = await prisma.$transaction([
@@ -28,10 +32,11 @@ module.exports = {
         }),
         prisma.program.findMany({
           orderBy: {
-            program_id: "asc",
+            [sortBy]: sortType,
           },
           where: params,
           include: {
+            program_category: true,
             program_institusi: {
               select: {
                 institusi_id: true,
@@ -168,6 +173,7 @@ module.exports = {
           required_error: "Target Dana Harus Diisi",
           invalid_type_error: "Target Dana Harus Diisi",
         }),
+        program_category_id: z.number(),
       });
 
       //BODY
@@ -175,7 +181,8 @@ module.exports = {
         ...req.body,
         program_end_date: new Date(req.body.program_end_date),
         program_start_date: new Date(req.body.program_start_date),
-        program_target_amount: parseInt(req.body.program_target_amount),
+        program_target_amount: Number(req.body.program_target_amount),
+        program_category_id: Number(req.body.program_category_id),
         program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
 
@@ -220,6 +227,11 @@ module.exports = {
       const program = await prisma.program.create({
         data: {
           ...rest,
+          program_category: {
+            connect: {
+              id: body.data.program_category_id,
+            },
+          },
           user: {
             connect: {
               user_id: Number(userId),

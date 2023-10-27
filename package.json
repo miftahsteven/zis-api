@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "nodemon app.js",
         "db:push": "prisma db push",
-        "db:generate": "prisma generate"
+        "db:generate": "prisma generate",
+        "db:pull": "prisma db pull"
     },
     "author": "MSCODX",
     "license": "ISC",
