@@ -58,6 +58,8 @@ model program {
   transactions          transactions[]
   program_category      program_category? @relation(fields: [program_category_id], references: [id])
   program_category_id   Int?
+  beneficiary           beneficiary?      @relation(fields: [beneficiary_id], references: [id])
+  beneficiary_id        Int?
 
   @@index([program_institusi_id], map: "program_program_institusi_id_fkey")
   @@index([user_id], map: "program_user_id_fkey")
@@ -88,6 +90,7 @@ model user {
   transactions   transactions[]
   mustahiq       mustahiq?       @relation(fields: [mustahiq_id], references: [id])
   type           UserType?       @relation(fields: [user_type], references: [user_type_id])
+  beneficiary    beneficiary[]
 
   @@index([user_type], map: "user_user_type_fkey")
 }
@@ -122,6 +125,22 @@ model mustahiq {
   imkas_number             String? @db.VarChar(255)
   bank_account_name        String  @db.VarChar(255)
   user                     user?
+}
+
+model beneficiary {
+  id                       Int       @id @default(autoincrement())
+  address                  String    @db.Text
+  ktp_url                  String    @db.VarChar(255)
+  kk_url                   String    @db.VarChar(255)
+  emergency_contact_name   String    @db.VarChar(255)
+  emergency_contact_number String    @db.VarChar(15)
+  bank_name                String    @db.VarChar(255)
+  bank_number              String    @db.VarChar(255)
+  imkas_number             String?   @db.VarChar(255)
+  bank_account_name        String    @db.VarChar(255)
+  user                     user?     @relation(fields: [user_id], references: [user_id])
+  user_id                  Int?
+  program                  program[]
 }
 
 model password_token {

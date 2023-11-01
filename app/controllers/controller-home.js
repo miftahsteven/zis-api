@@ -237,6 +237,13 @@ module.exports = {
               user_id: Number(userId),
             },
           },
+          // beneficiary: {
+          //   connectOrCreate: {
+          //     create: {
+
+          //     },
+          //   }
+          // },
           program_banner: {
             create: {
               banners_name: rest.program_title,
