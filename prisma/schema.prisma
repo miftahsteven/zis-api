@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://userziswaf:Zis321@@@149.129.225.79:234/ziswafApp"
+}
+
+model banners {
+  banners_id         Int      @id @default(autoincrement())
+  banners_name       String?  @db.VarChar(255)
+  banners_path       String?  @db.Text
+  banners_program_id Int?
+  program            program?
+}
+
+model customers {
+  customer_id       Int     @id @default(autoincrement())
+  customer_user_id  Int
+  customer_no_imkas String? @db.VarChar(15)
+  customer_durasi   Int?
+  customer_reminder Int?    @db.SmallInt
+  customer_status   Int?    @default(1) @db.SmallInt
+}
+
+model institusi {
+  institusi_id      Int       @id @default(autoincrement())
+  institusi_nama    String    @db.VarChar(255)
+  institusi_user_id Int?
+  institusi_no_hp   String?   @db.VarChar(15)
+  institusi_status  Int?      @default(1) @db.SmallInt
+  user              user?     @relation(fields: [institusi_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "institusi_FK")
+  program           program[]
+
+  @@index([institusi_user_id], map: "institusi_FK")
+}
+
+model program {
+  program_id            Int               @id @default(autoincrement())
+  program_kode          String?           @db.VarChar(10)
+  program_title         String            @db.VarChar(100)
+  program_short_desc    String?           @db.Text
+  program_start_date    DateTime?         @db.DateTime(0)
+  program_end_date      DateTime?         @db.DateTime(0)
+  program_description   String?           @db.Text
+  program_institusi_id  Int?
+  program_target_amount BigInt
+  program_create        DateTime?         @default(now()) @db.Timestamp(0)
+  program_status        Int?              @default(1) @db.SmallInt
+  program_isheadline    Int?              @default(0) @db.SmallInt
+  program_banner_id     Int               @unique
+  user_id               Int
+  notification          notification[]
+  program_banner        banners           @relation(fields: [program_banner_id], references: [banners_id])
+  program_institusi     institusi?        @relation(fields: [program_institusi_id], references: [institusi_id])
+  user                  user              @relation(fields: [user_id], references: [user_id])
+  transactions          transactions[]
+  program_category      program_category? @relation(fields: [program_category_id], references: [id])
+  program_category_id   Int?
+  beneficiary           beneficiary?      @relation(fields: [beneficiary_id], references: [id])
+  beneficiary_id        Int?
+
+  @@index([program_institusi_id], map: "program_program_institusi_id_fkey")
+  @@index([user_id], map: "program_user_id_fkey")
+}
+
+model program_category {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(255)
+  desc    String?   @db.Text
+  program program[]
+}
+
+model user {
+  user_id        Int             @id @default(autoincrement())
+  username       String          @unique(map: "user_UN") @db.VarChar(255)
+  user_password  String          @db.VarChar(255)
+  user_nama      String?         @db.VarChar(100)
+  user_phone     String?         @unique(map: "user_UN_2") @db.VarChar(100)
+  user_type      Int?            @default(0)
+  user_status    Int?            @default(0) @db.SmallInt
+  user_token     String?         @db.Text
+  user_reg_date  DateTime        @default(now()) @db.Timestamp(0)
+  mustahiq_id    Int?            @unique
+  institusi      institusi[]
+  notifications  notification[]
+  password_token password_token?
+  program        program[]
+  transactions   transactions[]
+  mustahiq       mustahiq?       @relation(fields: [mustahiq_id], references: [id])
+  type           UserType?       @relation(fields: [user_type], references: [user_type_id])
+  beneficiary    beneficiary[]
+
+  @@index([user_type], map: "user_user_type_fkey")
+}
+
+model notification {
+  id             Int           @id @default(autoincrement())
+  title          String        @db.VarChar(255)
+  description    String        @db.Text
+  type           String        @db.VarChar(255)
+  created_at     DateTime      @default(now()) @db.Timestamp(0)
+  program_id     Int?
+  transaction_id Int?
+  user_id        Int
+  program        program?      @relation(fields: [program_id], references: [program_id])
+  transaction    transactions? @relation(fields: [transaction_id], references: [id])
+  user           user          @relation(fields: [user_id], references: [user_id])
+
+  @@index([program_id], map: "notification_program_id_fkey")
+  @@index([transaction_id], map: "notification_transaction_id_fkey")
+  @@index([user_id], map: "notification_user_id_fkey")
+}
+
+model mustahiq {
+  id                       Int     @id @default(autoincrement())
+  address                  String  @db.Text
+  ktp_url                  String  @db.VarChar(255)
+  kk_url                   String  @db.VarChar(255)
+  emergency_contact_name   String  @db.VarChar(255)
+  emergency_contact_number String  @db.VarChar(15)
+  bank_name                String  @db.VarChar(255)
+  bank_number              String  @db.VarChar(255)
+  imkas_number             String? @db.VarChar(255)
+  bank_account_name        String  @db.VarChar(255)
+  user                     user?
+}
+
+model beneficiary {
+  id                       Int       @id @default(autoincrement())
+  address                  String    @db.Text
+  ktp_url                  String    @db.VarChar(255)
+  kk_url                   String    @db.VarChar(255)
+  emergency_contact_name   String    @db.VarChar(255)
+  emergency_contact_number String    @db.VarChar(15)
+  bank_name                String    @db.VarChar(255)
+  bank_number              String    @db.VarChar(255)
+  imkas_number             String?   @db.VarChar(255)
+  bank_account_name        String    @db.VarChar(255)
+  user                     user?     @relation(fields: [user_id], references: [user_id])
+  user_id                  Int?
+  program                  program[]
+}
+
+model password_token {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @unique
+  token   String @db.VarChar(255)
+  user    user   @relation(fields: [user_id], references: [user_id])
+}
+
+model UserType {
+  user_type_id   Int    @id @default(autoincrement())
+  user_type_name String @db.VarChar(100)
+  user           user[]
+
+  @@map("user_type")
+}
+
+model vendor {
+  vendor_id            Int     @id @default(autoincrement())
+  vendor_user_id       Int
+  vendor_address       String? @db.Text
+  vendor_ktp           String? @db.VarChar(255)
+  vendor_kk            String? @db.VarChar(255)
+  vendor_kontak_name   String? @db.VarChar(255)
+  vendor_kontak_number String? @db.VarChar(15)
+  vendor_bank_name     String? @db.VarChar(255)
+  vendor_bank_number   Int?
+  vendor_bank_id       Int?
+}
+
+model test_table {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model transactions {
+  id             Int            @id @default(autoincrement())
+  program_id     Int
+  user_id        Int
+  amount         Int            @db.MediumInt
+  payment_method String         @db.VarChar(100)
+  evidence       String         @db.Text
+  status         String         @default("pending") @db.VarChar(100)
+  notification   notification[]
+  program        program        @relation(fields: [program_id], references: [program_id])
+  user           user           @relation(fields: [user_id], references: [user_id])
+
+  @@index([program_id], map: "transactions_program_id_fkey")
+  @@index([user_id], map: "transactions_user_id_fkey")
+}
+
+model bank_account {
+  id          Int           @id @default(autoincrement())
+  bank_name   String        @db.VarChar(255)
+  bank_number String        @db.VarChar(255)
+  ebs_staging ebs_staging[]
+}
+
+model ebs_staging {
+  id             Int          @id @default(autoincrement())
+  account_number Int
+  trans_ref      String?      @db.VarChar(50)
+  bank_date      String?      @db.VarChar(8)
+  state_num      String?      @db.VarChar(25)
+  currency       String?      @db.VarChar(3)
+  ob_amount      String?      @db.VarChar(200)
+  ob_ind         String?      @db.VarChar(50)
+  eb_amount      String?      @db.VarChar(200)
+  eb_ind         String?      @db.VarChar(50)
+  trans_date     String?      @db.VarChar(8)
+  trans_type     String?      @db.VarChar(27)
+  trans_amount   String?      @db.VarChar(27)
+  trans_id       String?      @db.VarChar(27)
+  text_info      String?      @db.VarChar(200)
+  ebs_info1      String?      @db.VarChar(50)
+  ebs_info2      String?      @db.VarChar(50)
+  ebs_info3      String?      @db.VarChar(50)
+  ebs_filename   String?      @db.VarChar(255)
+  bank_account   bank_account @relation(fields: [account_number], references: [id])
+
+  @@index([account_number], map: "ebs_staging_account_number_fkey")
+}
+
+model tccode {
+  id     Int      @id @default(autoincrement())
+  ccode  String   @unique
+  cname  String
+  cncode String
+  athead athead[]
+}
+
+model athead {
+  id     Int     @id @default(autoincrement())
+  ccode  String
+  fyear  String
+  docnr  String
+  atgla  atgla[]
+  tccode tccode  @relation(fields: [ccode], references: [ccode])
+
+  @@unique([ccode, fyear, docnr])
+}
+
+model atgla {
+  id     Int    @id @default(autoincrement())
+  ccode  String
+  fyear  String
+  docnr  String
+  clrdt  String
+  docit  String
+  posdt  String
+  docdt  String
+  dtype  String
+  athead athead @relation(fields: [ccode, fyear, docnr], references: [ccode, fyear, docnr])
+
+  @@index([ccode, fyear, docnr], map: "atgla_ccode_fyear_docnr_fkey")
+}

@@ -1,469 +1,470 @@
-const config = require('../../config/config.db');
-const mysql = require('mysql2');
-const md5 = require('md5');
-const { password } = require('../../config/config.db');
-const pool = mysql.createPool(config);
-const { generate, generateDelete, verify } = require("../helper/auth-jwt");
-const nodemailer = require("nodemailer");
-const { use } = require('../routes/route-auth');
+const { generate } = require("../helper/auth-jwt");
+const { prisma } = require("../../prisma/client");
+const { z } = require("zod");
+const { nanoid } = require("nanoid");
+const argon2 = require("argon2");
+const { generateTemplate, sendEmail, generateTemplateForgotEmail } = require("../helper/email");
+const crypto = require("node:crypto");
 
-pool.on('error',(err)=> {
-    console.error(err);
-});
+module.exports = {
+  // LOGIN USER
+  async loginUser(req, res) {
+    try {
+      const { username, password } = req.body;
 
-function deteksiOperatorSeluler(phone){
-    const prefix = phone.slice(0, 4);
-    //if (['0831', '0832', '0833', '0838'].includes(prefix)) return 'axis';
-    //if (['0895', '0896', '0897', '0898', '0899'].includes(prefix)) return 'three';
-    //if (['0817', '0818', '0819', '0859', '0878', '0877'].includes(prefix)) return 'xl';
-    if (['0814', '0815', '0816', '0855', '0856', '0857', '0858'].includes(prefix)) return 'indosat';
-    //if (['0812', '0813', '0852', '0853', '0821', '0823', '0822', '0851', '0811'].includes(prefix)) return 'telkomsel';
-    //if (['0881', '0882', '0883', '0884', '0885', '0886', '0887', '0888', '0889'].includes(prefix)) return 'smartfren';
-    return null;
-}
+      if (!username || !password) {
+        return res.status(400).json({
+          message: "Username atau Password Salah",
+        });
+      }
 
-
-function genPassword() {
-    var length = 8,
-        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        retVal = "";
-    for (var i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
-    }
-    return retVal;
- }
-
-sendEmail = async (email, subject, text, html) => {
-
-    const transporter = nodemailer.createTransport({        
-        //host: "smtp.gmail.com",
-        host: "mail.zisindosat.id",
-        port: 465,
-        secure: true,
-        // tls: true,
-        auth: {
-          // TODO: replace `user` and `pass` values from <https://forwardemail.net>
-          //user: "miftahsteven@gmail.com",
-          //pass: "fhgtzhirmjsbpaxt",
-          user: "admin@zisindosat.id",
-          pass: "ziswaf2019" 
+      const user = await prisma.user.findUnique({
+        where: {
+          username,
         },
-        // tls: {
-        //     // do not fail on invalid certs
-        //     rejectUnauthorized: false,
-        //   },
       });
 
-    const info = await transporter.sendMail({
-        from: 'admin@zisindosat.id', 
-        to: email, 
-        subject: subject, 
-        text: text,
-        html: html
+      if (!user) {
+        return res.status(400).json({
+          message: "Username atau Password Salah",
+        });
+      }
+
+      const passwordMatch = await argon2.verify(user.user_password, password);
+      if (!passwordMatch) {
+        return res.status(400).json({
+          message: "Username atau Password Salah",
+        });
+      }
+
+      if (user.user_status === 0) {
+        return res.status(400).json({
+          message: "Akun belum diverifikasi",
+        });
+      }
+
+      const omit = require("lodash/omit");
+
+      const cleanUser = omit(user, ["user_password", "user_token"]);
+
+      const token = generate(cleanUser);
+
+      await prisma.user.update({
+        where: {
+          username,
+        },
+        data: {
+          user_token: token,
+        },
       });
 
-      console.log("Message sent: %s", info.messageId); 
+      return res.status(200).json({
+        message: "Login Berhasil",
+        data: cleanUser,
+        token,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+  async registerUser(req, res) {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+        nama: z.string(),
+        phone: z.string().min(10),
+        type: z.string(),
+      });
 
-      return info.messageId;
+      const { email, nama, phone, type } = req.body;
 
-} 
+      const body = await schema.safeParseAsync({
+        email,
+        nama,
+        phone,
+        type,
+      });
 
-module.exports ={
-    // LOGIN USER    
-    loginUser(req,res){
-        
-        let username = req.body.username;
-        let userpasswd = req.body.password;
-        console.log("---->",username);
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            let q = connection.query(
-                `
-                SELECT * FROM user WHERE username = ? and user_password = MD5(?);
-                `
-            , [username, userpasswd],
-            function (error, results, fields) {
-                if(error) { 
-                    //throw error
-                    res.send({ 
-                        success: false,
-                        code: 202,  
-                        message: "ERROR KONEKSI DATABASE",
-                    });
-                } else {                    
-                   console.log(q.sql);
+      let errorObj = {};
 
-                    if (results.length > 0) {
+      if (body.error) {
+        body.error.issues.forEach((issue) => {
+          errorObj[issue.path[0]] = issue.message;
+        });
+        body.error = errorObj;
+      }
 
-                        if(results[0].user_status == 0){
-                            res.send({ 
-                                success: false,
-                                code: 205,  
-                                message: "Username Belum Melakukan Verifikasi Email",
-                            });                                
-                        }else{
+      if (!body.success) {
+        return res.status(400).json({
+          message: "Beberapa Field Harus Diisi",
+          error: errorObj,
+        });
+      }
 
-                            const payload = {
-                                user_id: results[0]["user_id"], 
-                                username: results[0]["username"],
-                                nama: results[0]["user_nama"],
-                                phone: results[0]["user_phone"], 
-                                type: results[0]["user_type"], 
-                            };
-                            const update_token = generate(payload, null);
-                            
-                            pool.getConnection(function(err2, connection2) {
-                                if (err2) console.log(err2);
+      const currentUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ username: body.data.email }, { user_phone: body.data.phone }],
+        },
+      });
 
-                                let id = results[0]["user_id"]     
+      if (currentUser) {
+        return res.status(400).json({
+          message: "User sudah terdaftar",
+        });
+      }
 
-                                let dataUpdate = {
-                                    user_token : update_token                             
-                                }
-                                let q0 = connection2.query(
-                                    `
-                                    UPDATE user SET ? WHERE user_id = ?;
-                                    `
-                                , [dataUpdate,id],
-                                function (error2, results2, fields2) {
-                                    console.log(q0.sql)
-                                    if(error2) { 
-                                        //throw error
-                                        res.send({ 
-                                            success: false,
-                                            code: 202,  
-                                            message: "Login Gagal",
-                                        });
-                                    } else {                   
-                                        results[0]["user_password"] = undefined;      
-                                        results[0]["user_token"] = undefined;                                     
-                                        console.log(q0.sql);
-                                        res.send({ 
-                                            success: true, 
-                                            message: 'Login Berhasil!',                                        
-                                            session_id: md5(results[0]["username"]),                                        
-                                            token: update_token,
-                                            data: results
-                                        });
-                                    }
-                                });
-                                connection2.release();
-                            })
-                        }
+      const password = nanoid(10);
+      const hashedPassword = await argon2.hash(password);
 
-                    } else {
-                        res.send({ 
-                            success: false,
-                            code: 201,  
-                            message: "Username dan Password Salah",
-                        });
-                    }	
-                }
-            });
-            connection.release();
-        })
-    },    
-    registerUser(req,res){
+      console.log({ password });
 
-        const passwordUser = genPassword();
+      await prisma.user.create({
+        data: {
+          user_password: hashedPassword,
+          username: body.data.email,
+          user_nama: body.data.nama,
+          user_type: Number(body.data.type),
+          user_status: 0,
+          user_phone: body.data.phone,
+        },
+      });
 
-        //if(deteksiOperatorSeluler(req.body.phone))
-        
-        let data = {
-            user_type : req.body.type,
-            username : req.body.email,
-            user_nama : req.body.nama,
-            user_phone : req.body.phone,
-            user_password : md5(passwordUser)
-        }
+      const templateEmail = generateTemplate({ email: body.data.email, password });
+      const msgId = await sendEmail({
+        email: body.data.email,
+        html: templateEmail,
+        subject: "Pendaftaran Ziswaf INDOSAT",
+      });
 
+      if (!msgId) {
+        return res.status(400).json({
+          message: "Gagal mengirim email",
+        });
+      }
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Daftar, silahkan cek email",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-            let q = connection.query(
-                `
-                INSERT INTO user SET ?;
-                `
-            , [data],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                    if(error.errno == "1062"){
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            //message: error.sqlMessage,
-                            message: "Ada Duplikat Data Nomor Handphone/NIK"
-                        });
-                    }else{
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            //message: error.sqlMessage,
-                            message: "Gagal Tambah Data"
-                        });
-                    }
+  async updateUser(req, res) {
+    try {
+      const userId = req.user_id;
+      const { nama, phone } = req.body;
 
-                }else{
-                    let akunEmail = req.body.email;
-                    let encodedEmail = Buffer.from(akunEmail).toString('base64');
-                                        
-                    let subjectEmail = "Pendaftaran Ziswaf INDOSAT";
-                    let textEmail = "Assalamu'alaikum, Wr Wb. \n\n Terima Kasih Telah Mendaftar sebagai Mustahiq Ke Ziswaf INDOSAT. \n\n Berikut ini adalah detail login anda : \n\n Username : "+ akunEmail +" \n\n Password : "+passwordUser+" \n\n. Untuk melanjutkan proses registrasi dan agar anda bisa melakukan login, silahkan lakukan Verifikasi terlebih dahulu, dengan melakukan klik pada link berikut \n\n. https://portal.zisindosat.id/verifikasi/?akun="+encodedEmail+".\n\n Terima kasih atas partisipasi anda. \n\n Wassalamu'alaikum Wr, Wb";
-                    let htmlEmail = "Assalamu'alaikum, Wr Wb. <br /> Terima Kasih Telah Mendaftar sebagai Mustahiq Ke Ziswaf INDOSAT. <br /> Berikut ini adalah detail login anda : <br/> Username : "+ akunEmail +" <br /> Password : "+passwordUser+" <br/> Untuk melanjutkan proses registrasi dan agar anda bisa melakukan login, silahkan lakukan Verifikasi terlebih dahulu, dengan melakukan klik pada link berikut <br/><br/>.<a href='https://portal.zisindosat.id/verifikasi/?akun="+encodedEmail+"'>VERIFIKASI AKUN</a>.<br/><br/> Terima kasih atas partisipasi anda. <br/> Wassalamu'alaikum Wr, Wb";
-                    const idmessage = sendEmail(akunEmail, subjectEmail, textEmail, htmlEmail);
-                    if(idmessage != undefined){
-                        res.send({ 
-                            success: true,
-                            code: 200,                              
-                            message: "Sukses Daftar User Baru"
-                        });
-                    }else{
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            //message: error.sqlMessage,
-                            message: "Gagal Kirim Email Password"
-                        });
-                    }
+      if (!nama || !phone) {
+        return res.status(400).json({
+          message: "Nama, dan Nomor Telepon harus diisi",
+        });
+      }
 
-                }
-            })
+      await prisma.user.update({
+        where: {
+          user_id: userId,
+        },
+        data: {
+          user_nama: nama,
+          user_phone: phone,
+        },
+      });
 
-        })    
-    },
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Update Data",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-    updateUser(req,res){
+  async updatePasswordWithAuth(req, res) {
+    try {
+      const userId = req.user_id;
+      const { password, newPassword } = req.body;
 
-        let hd = req.user
-	    let user_id = hd.user_id
-            
-        let data = {            
-            user_nama : req.body.nama,
-            user_phone : req.body.phone,            
-        }
+      if (!password || !newPassword) {
+        return res.status(400).json({
+          message: "Password, dan Password Baru harus diisi",
+        });
+      }
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
+      const user = await prisma.user.findUnique({
+        where: {
+          user_id: userId,
+        },
+      });
 
-            let q = connection.query(
-                `
-                UPDATE user SET ? WHERE user_id = ?;
-                `
-            , [data, user_id],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            message: error.sqlMessage,
-                            message: "Error : Something When Wrong"
-                        });
+      if (!user) {
+        return res.status(400).json({
+          message: "User tidak ditemukan",
+        });
+      }
 
-                }else{
+      const passwordMatch = await argon2.verify(user.user_password, password);
+      if (!passwordMatch) {
+        return res.status(400).json({
+          message: "Password Lama salah",
+        });
+      }
 
-                    res.send({ 
-                        success: true,
-                        code: 200,                              
-                        message: "User Data Updated"
-                    });
+      const hashedPassword = await argon2.hash(newPassword);
 
-                }
-            })
+      await prisma.user.update({
+        where: {
+          user_id: userId,
+        },
+        data: {
+          user_password: hashedPassword,
+        },
+      });
 
-        })
-    
-    },
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Ganti Password",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-    updatePasswordWithAuth(req,res){
+  async forgotPassword(req, res) {
+    try {
+      const email = req.body.email;
 
-        let hd = req.user
-	    let user_id = hd.user_id
-            
-        let data = {            
-            user_password : md5(req.body.password)
-        }
+      if (!email) {
+        return res.status(400).json({
+          message: "Email harus diisi",
+        });
+      }
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
+      const user = await prisma.user.findUnique({
+        where: {
+          username: email,
+        },
+      });
 
-            let q = connection.query(
-                `
-                UPDATE user SET ? WHERE user_id = ?;
-                `
-            , [data, user_id],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            message: error.sqlMessage,
-                            message: "Error : Something When Wrong"
-                        });
+      if (!user) {
+        return res.status(400).json({
+          message: "User tidak ditemukan",
+        });
+      }
 
-                }else{
+      const randomToken = crypto.randomBytes(32).toString("hex");
+      console.log(randomToken);
 
-                    res.send({ 
-                        success: true,
-                        code: 200,                              
-                        message: "Success : Password Updated "
-                    });
+      await prisma.password_token.upsert({
+        where: {
+          user_id: user.user_id,
+        },
+        create: {
+          token: randomToken,
+          user_id: user.user_id,
+        },
+        update: {
+          token: randomToken,
+        },
+      });
 
-                }
-            })
+      const templateEmail = generateTemplateForgotEmail({ email: user.username, token: randomToken });
 
-        })
-    
-    },
+      const msgId = await sendEmail({
+        email: user.username,
+        html: templateEmail,
+        subject: "Reset Password Ziswaf INDOSAT",
+      });
 
-    updatePassword(req,res){
+      if (!msgId) {
+        return res.status(400).json({
+          message: "Gagal mengirim email",
+        });
+      }
 
-        let username = atob(req.body.username)
-            
-        let data = {            
-            user_password : md5(req.body.password)
-        }
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Kirim Email",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
+  async resetPassword(req, res) {
+    try {
+      const { token, email, password } = req.body;
 
-            let q = connection.query(
-                `
-                UPDATE user SET ? WHERE username = ?;
-                `
-            , [data, username],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            message: error.sqlMessage,
-                            message: "Error : Something When Wrong"
-                        });
+      if (!token || !email) {
+        return res.status(400).json({
+          message: "Gagal reset password, token tidak valid",
+        });
+      }
 
-                }else{
+      const user = await prisma.user.findUnique({
+        where: {
+          username: email,
+        },
+      });
 
-                    res.send({ 
-                        success: true,
-                        code: 200,                              
-                        message: "Success : Password Updated "
-                    });
+      if (!user) {
+        return res.status(400).json({
+          message: "Gagal reset password, token tidak valid",
+        });
+      }
 
-                }
-            })
+      const passwordToken = await prisma.password_token.findUnique({
+        where: {
+          token,
+          user_id: user.user_id,
+        },
+      });
 
-        })
-    
-    },
+      if (!passwordToken) {
+        return res.status(400).json({
+          message: "Gagal reset password, token tidak valid",
+        });
+      }
 
-    resetPassword(req,res){
+      if (!password) {
+        return res.status(400).json({
+          message: "Password harus diisi",
+        });
+      }
 
-        let username = req.body.username;
-        
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            let q = connection.query(
-                `
-                SELECT user_id FROM user WHERE username = ?
-                `
-            , [username],
-            function (error, results, fields) {
-                if(error) { 
-                    //throw error
-                    res.send({ 
-                        success: false,
-                        code: 400,  
-                        message: "Error: Something When Wrong",
-                    });
-                } else {                    
-                    
-                    let encodedUsername = Buffer.from(username).toString('base64');
-                   console.log(q.sql);
-                    if (results.length > 0) {                        
-                        let subjectEmail = "Reset Password Ziswaf INDOSAT";
-                        let textEmail = "Assalamu'alaikum, Wr Wb. \n\nKami telah menerima permintaanmu untuk melakukan reset password. Untuk melanjutkan pergantian password silakan klik tautan berikut . \n\nhttps://api.zisindosat.id/ubahpassword/"+encodedUsername+" \n\n\nTerima kasih.";
-                        let htmlEmail = "Assalamu'alaikum, Wr Wb. <br/>Kami telah menerima permintaanmu untuk melakukan reset password. Untuk melanjutkan pergantian password silakan klik tautan berikut . <br/><a href='https://portal.zisindosat.id/ubahpassword"+encodedUsername+"'> UBAH PASSWORD </a> <br/><br/>Terima kasih.";
-                        const idmessage = sendEmail(username, subjectEmail, textEmail, htmlEmail);
-                        if(idmessage != undefined){
-                            res.send({ 
-                                success: true,
-                                code: 200,                              
-                                message: "Success : Email Sent For Reset Password"
-                            });
-                        }else{
-                            res.send({ 
-                                success: false,
-                                code: error.errno,  
-                                //message: error.sqlMessage,
-                                message: "Failed : Email Not Sent"
-                            });
-                        }
-                        
-                        
-                    } else {
-                        res.send({ 
-                            success: false,
-                            code: 200,  
-                            message: "Data Empty",
-                        });
-                    }	
-                }
-            });
-            connection.release();
-        })
+      const hashedPassword = await argon2.hash(password);
 
+      await prisma.user.update({
+        where: {
+          username: email,
+        },
+        data: {
+          user_password: hashedPassword,
+        },
+      });
 
-    },
+      await prisma.password_token.delete({
+        where: {
+          user_id: user.user_id,
+          token: passwordToken.token,
+        },
+      });
 
-    verifiedUser(req,res){
-            
-        let email = req.body.email
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Reset Password",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-        //console.log(email);
+  async verifiedUser(req, res) {
+    try {
+      const email = req.body.email;
 
-        let data = {
-            user_status : 1
-        }
+      const user = await prisma.user.findUnique({
+        where: {
+          username: email,
+        },
+      });
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
+      if (!user) {
+        return res.status(400).json({
+          message: "User tidak ditemukan",
+        });
+      }
 
-            let q = connection.query(
-                `
-                UPDATE user SET ? WHERE username = ?;
-                `
-            , [data, email],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            message: error.sqlMessage,
-                            message: "Error : Something When Wrong"
-                        });
+      await prisma.user.update({
+        where: {
+          username: email,
+        },
+        data: {
+          user_status: 1,
+        },
+      });
 
-                }else{
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Verifikasi",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 
-                    res.send({ 
-                        success: true,
-                        code: 200,                              
-                        message: "User Verified"
-                    });
+  async detailUser(req, res) {
+    try {
+      const userId = req.user_id;
 
-                }
-            })
+      const user = await prisma.user.findUnique({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          institusi: true,
+          mustahiq: true,
+        },
+      });
 
-        })
-    
-    },
-}
+      if (!user) {
+        return res.status(404).json({
+          message: "User tidak ditemukan",
+        });
+      }
+
+      const omit = require("lodash/omit");
+
+      const cleanUser = omit(user, ["user_password", "user_token"]);
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: cleanUser,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
+  async getNotifications(req, res) {
+    try {
+      const userId = req.user_id;
+
+      const notifications = await prisma.notification.findMany({
+        where: {
+          user_id: userId,
+        },
+        include: {
+          program: true,
+          transaction: true,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: notifications,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+};

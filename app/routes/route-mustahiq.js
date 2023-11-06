@@ -1,13 +1,25 @@
-const router = require('express').Router();
-const { mustahiq } = require('../controllers');
-const multer  = require('multer')
-//const upload = multer({ dest: './uploads/reports/' })
-const { authentication, authorization } = require("../../config/auth");
+const router = require("express").Router();
+const mustahiq = require("../controllers/controller-mustahiq");
+const { authentication } = require("../../config/auth");
+const { upload } = require("../helper/upload");
+const { validateFields } = require("../middleware/middleware-mustahiq");
 
-
-// GET localhost:8080/home => Ambil data semua dari awal
-router.get('/getdata', authentication, mustahiq.getMustahiqById);
-
-
+router.get("/", authentication, mustahiq.details);
+router.post(
+  "/create",
+  authentication,
+  validateFields,
+  upload.fields([
+    {
+      name: "ktp_file",
+      maxCount: 1,
+    },
+    {
+      name: "kk_file",
+      maxCount: 1,
+    },
+  ]),
+  mustahiq.create
+);
 
 module.exports = router;

@@ -1,287 +1,337 @@
-const config = require('../../config/config.db');
-const mysql = require('mysql2');
-const { password } = require('../../config/config.db');
-const pool = mysql.createPool(config);
-const { generate, generateDelete, verify } = require("../helper/auth-jwt");
-const nodemailer = require("nodemailer");
+const { prisma } = require("../../prisma/client");
+const fs = require("fs/promises");
 
-pool.on('error',(err)=> {
-    console.error(err);
-});
+const { customAlphabet } = require("nanoid");
+const { z } = require("zod");
 
-function genCodeProgram() {
-    var length = 5,
-        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        retVal = "";
-    for (var i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 8);
+
+module.exports = {
+  async getAllProgram(req, res) {
+    try {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 2);
+      const skip = (page - 1) * perPage;
+      const keyword = req.query.keyword || "";
+      const category = req.query.category || "";
+      const sortBy = req.query.sortBy || "program_id";
+      const sortType = req.query.order || "asc";
+
+      const params = {
+        program_status: status,
+        program_title: {
+          contains: keyword,
+        },
+        ...(category ? { program_category_id: Number(category) } : {}),
+      };
+
+      const [count, program] = await prisma.$transaction([
+        prisma.program.count({
+          where: params,
+        }),
+        prisma.program.findMany({
+          orderBy: {
+            [sortBy]: sortType,
+          },
+          where: params,
+          include: {
+            program_category: true,
+            program_institusi: {
+              select: {
+                institusi_id: true,
+                institusi_nama: true,
+              },
+            },
+            program_banner: {
+              select: {
+                banners_path: true,
+                banners_id: true,
+              },
+            },
+          },
+          skip,
+          take: perPage,
+        }),
+      ]);
+
+      const programResult = await Promise.all(
+        program.map(async (item) => {
+          const total_donation = await prisma.transactions.aggregate({
+            where: {
+              program_id: item.program_id,
+            },
+            _sum: {
+              amount: true,
+            },
+          });
+
+          return {
+            ...item,
+            program_target_amount: Number(item.program_target_amount),
+            total_donation: total_donation._sum.amount || 0,
+          };
+        })
+      );
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: programResult,
+        pagination: {
+          total: count,
+          page,
+          hasNext: count > page * perPage,
+          totalPage: Math.ceil(count / perPage),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
     }
-    return retVal;
- }
+  },
 
+  async getProgramById(req, res) {
+    try {
+      const id = req.params.id;
 
-module.exports ={
-    // GET ALL PROGRAM DATA
-    
-    getAllProgram(req,res){
+      if (!id) {
+        return res.status(400).json({
+          message: "id is required",
+        });
+      }
 
-        var pageSize = 10;
-        var numberOfRows;
-        var numberOfPages;
-        var numberPerPage = parseInt(pageSize,10) || 1;
-        //var page = parseInt(pageInfo.page, 10) || 1;
-        var page = parseInt(req.query.page, 10) || 1;
-        var skip = (page-1)  * numberPerPage;
-        var limit = skip + ',' + numberPerPage;
-        var search = req.query.search;
-        var keyword;
-        if(search != "" && search != undefined){
-            keyword = `AND program_title like "%${search}%"`
-        }else{
-            keyword = ""
-        }
-        
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            let q = connection.query(
-                `
-                SELECT program_id, program_kode, program_title, 
-                program_short_desc, program_start_date, program_end_date, 
-                program_description, program_target_amount, 
-                institusi_nama, institusi_no_hp, banners_path                
-                FROM program JOIN institusi ON program_institusi_id = institusi_id  
-                JOIN banners ON banners_program_id = program_id
-                WHERE program_status = 1 and institusi_status = 1  ${keyword} ORDER BY program_id DESC;
-                `
-            , [],
-            function (error, results, fields) {
-                console.log(q.sql);
-                if(error) { 
-                    //throw error
-                    res.send({ 
-                        success: false,
-                        code: 400,  
-                        message: "Error: Something When Wrong",
-                    });
-                } else {                    
-                                       
-                   pool.getConnection(function(err2, connection2) {
-                    if (err2) console.log(err2);
-                    let r = connection2.query(
-                        `
-                        SELECT program_id, program_kode, program_title, 
-                        program_short_desc, program_start_date, program_end_date, 
-                        program_description, program_target_amount, 
-                        institusi_nama, institusi_no_hp, banners_path                
-                        FROM program JOIN institusi ON program_institusi_id = institusi_id  
-                        JOIN banners ON banners_program_id = program_id
-                        WHERE program_status = 1 and institusi_status = 1  ${keyword} ORDER BY program_id DESC LIMIT ${limit};
-                        `
-                    , [],
-                    function (error2, results2, fields2) {
-                        console.log("----><",r.sql);
-                        if(error2) { 
-                            //throw error
-                            res.send({ 
-                                success: false,
-                                code: 400,  
-                                message: "Error: Something When Wrong",
-                            });
-                        } else {                    
-                           
-                            if (results2.length > 0) {                        
-                                numberOfRows = results.length;
-                                numberOfPages = Math.ceil(numberOfRows / numberPerPage);
-                                console.log("page: ",page, "numberOfPages", numberOfPages, "numberofrow: ", numberOfRows , "numberPerPage: ", numberPerPage);
-                                res.send({ 
-                                    success: true,
-                                    code: 200,  
-                                    message: "Sukses Ambil Data",
-                                    data: results2,
-                                    total: results2.length,
-                                    pagination: {
-                                                    current: page,
-                                                    numberPerPage: numberPerPage,
-                                                    has_previous: page > 1,
-                                                    previous: page - 1,
-                                                    has_next: page < numberOfPages,
-                                                    next: page + 1,
-                                                    last_page: Math.ceil(numberOfRows / pageSize)
-                                                }
-        
-                                });
-                                
-                            } else {
-                                res.send({ 
-                                    success: true,
-                                    code: 200,  
-                                    message: "Sukses Ambil Data",
-                                    data: results2,
-                                    total: results.length2,
-                                    pagination: {
-                                                    current: page,
-                                                    numberPerPage: numberPerPage,
-                                                    has_previous: page > 1,
-                                                    previous: page - 1,
-                                                    has_next: page < numberOfPages,
-                                                    next: page + 1,
-                                                    last_page: Math.ceil(numberOfRows / pageSize)
-                                                }
-                                });
-                            }	
-                        }
-                    });
-                    connection2.release();
-                })
-                   
-                }
-            });
-            connection.release();
-        })
-    },    
+      const [program, totalDonation] = await prisma.$transaction([
+        prisma.program.findUnique({
+          where: {
+            program_id: parseInt(id),
+          },
+          include: {
+            program_banner: true,
+            program_institusi: true,
+            transactions: {
+              select: {
+                amount: true,
+                id: true,
+                user: {
+                  select: {
+                    user_id: true,
+                    user_nama: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
 
-    getProgramHeadline(req,res){
-        
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            let q = connection.query(
-                `
-                SELECT program_id, program_kode, program_title, 
-                program_short_desc, program_start_date, program_end_date, 
-                program_description, program_target_amount, 
-                institusi_nama, institusi_no_hp, banners_path                
-                FROM program JOIN institusi ON program_institusi_id = institusi_id  
-                JOIN banners ON banners_program_id = program_id
-                WHERE program_status = 1 and institusi_status = 1 and program_isheadline = 1 ORDER BY program_id DESC;
-                `
-            , [],
-            function (error, results, fields) {
-                if(error) { 
-                    //throw error
-                    res.send({ 
-                        success: false,
-                        code: 400,  
-                        message: "Error: Something When Wrong",
-                    });
-                } else {                    
-                   console.log(q.sql);
-                    if (results.length > 0) {
-                        
-                        res.send({ 
-                            success: true,
-                            code: 200,  
-                            message: "Sukses Ambil Data",
-                            data: results
-                        });
-                        
-                    } else {
-                        res.send({ 
-                            success: false,
-                            code: 202,  
-                            message: "Error: Get Data Failed",
-                        });
-                    }	
-                }
-            });
-            connection.release();
-        })
-    },    
+        prisma.transactions.aggregate({
+          where: {
+            program_id: parseInt(id),
+          },
+          _sum: {
+            amount: true,
+          },
+        }),
+      ]);
 
-    getProgramById(req,res){
-        
-        var id = req.params.id;
+      if (!program) {
+        return res.status(404).json({
+          message: "Program Tidak Ditemukan",
+        });
+      }
 
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            let q = connection.query(
-                `
-                SELECT program_id, program_kode, program_title, 
-                program_short_desc, program_start_date, program_end_date, 
-                program_description, program_target_amount, 
-                institusi_nama, institusi_no_hp, banners_path                
-                FROM program JOIN institusi ON program_institusi_id = institusi_id  
-                JOIN banners ON banners_program_id = program_id
-                WHERE program_status = 1 and institusi_status = 1 and program_id = ? ORDER BY program_id DESC;
-                `
-            , [id],
-            function (error, results, fields) {
-                if(error) { 
-                    //throw error
-                    res.send({ 
-                        success: false,
-                        code: 400,  
-                        message: "Error: Something When Wrong",
-                    });
-                } else {                    
-                   console.log(q.sql);
-                    if (results.length > 0) {
-                        
-                        res.send({ 
-                            success: true,
-                            code: 200,  
-                            message: "Sukses Ambil Data",
-                            data: results
-                        });
-                        
-                    } else {
-                        res.send({ 
-                            success: false,
-                            code: 202,  
-                            message: "Error: Get Data Failed",
-                        });
-                    }	
-                }
-            });
-            connection.release();
-        })
-    },    
-
-    registerProgram(req,res){
-            
-        let data = {
-            program_kode : genCodeProgram(),
-            program_title : req.body.title,
-            program_short_desc : req.body.short_desc,
-            program_start_date : req.body.start_date,
-            program_end_date : req.body.end_date,
-            program_description : req.body.description,
-            program_institusi_id : req.body.institusi_id,
-            program_target_amount : req.body.target_amount
-        }
-
-
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-
-            let q = connection.query(
-                `
-                INSERT INTO program SET ?;
-                `
-            , [data],
-            function (error, results) {
-                console.log(q.sql);
-                if(error) { 
-                    console.log(error);
-                        res.send({ 
-                            success: false,
-                            code: error.errno,  
-                            message: error.sqlMessage,
-                            message: "Error : Something When Wrong"
-                        });
-
-                }else{
-
-                    res.send({ 
-                        success: true,
-                        code: 200,                              
-                        message: "Sukses Daftar Program Baru"
-                    });
-
-                }
-            })
-
-        })
-    
+      res.status(200).json({
+        message: "Sukses Ambil Data",
+        data: JSON.parse(
+          JSON.stringify({
+            ...program,
+            program_target_amount: Number(program.program_target_amount),
+            total_donation: totalDonation._sum.amount || 0,
+          })
+        ),
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Terjadi Kesalahan Server",
+        stack: error?.message,
+      });
     }
-    
-}
+  },
+
+  async registerProgram(req, res) {
+    try {
+      const schema = z.object({
+        program_title: z.string({ required_error: "Judul Harus Diisi" }).min(3, "Judul Terlalu Pendek").max(255),
+        program_short_desc: z.string().optional(),
+        program_start_date: z.date({ required_error: "Tanggal Mulai Harus Diisi" }),
+        program_end_date: z.date({ required_error: "Tanggal Berakhir Harus Diisi" }),
+        program_description: z.string({ required_error: "Deskripsi Harus Diis" }).min(3),
+        program_institusi_id: z.number().optional(),
+        program_target_amount: z.number({
+          required_error: "Target Dana Harus Diisi",
+          invalid_type_error: "Target Dana Harus Diisi",
+        }),
+        program_category_id: z.number(),
+      });
+
+      //BODY
+      const body = await schema.safeParseAsync({
+        ...req.body,
+        program_end_date: new Date(req.body.program_end_date),
+        program_start_date: new Date(req.body.program_start_date),
+        program_target_amount: Number(req.body.program_target_amount),
+        program_category_id: Number(req.body.program_category_id),
+        program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
+      });
+
+      let errorObj = {};
+
+      if (body.error) {
+        body.error.issues.forEach((issue) => {
+          errorObj[issue.path[0]] = issue.message;
+        });
+        body.error = errorObj;
+      }
+
+      if (!body.success) {
+        return res.status(400).json({
+          message: "Beberapa Field Harus Diisi",
+          error: errorObj,
+        });
+      }
+
+      //FILE
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({
+          message: "Banner harus diupload",
+        });
+      }
+
+      const maxSize = 5000000;
+      if (file.size > maxSize) {
+        await fs.unlink(file.path);
+
+        return res.status(400).json({
+          message: "Ukuran Banner Terlalu Besar",
+        });
+      }
+
+      const { program_institusi_id, ...rest } = body.data;
+
+      const userId = req.user_id;
+
+      const program = await prisma.program.create({
+        data: {
+          ...rest,
+          program_category: {
+            connect: {
+              id: body.data.program_category_id,
+            },
+          },
+          user: {
+            connect: {
+              user_id: Number(userId),
+            },
+          },
+          // beneficiary: {
+          //   connectOrCreate: {
+          //     create: {
+
+          //     },
+          //   }
+          // },
+          program_banner: {
+            create: {
+              banners_name: rest.program_title,
+              banners_path: `uploads/${file.filename}`,
+            },
+          },
+          program_kode: nanoid(),
+          ...(program_institusi_id
+            ? {
+                program_institusi: {
+                  connect: {
+                    institusi_id: program_institusi_id,
+                  },
+                },
+              }
+            : {}),
+        },
+      });
+
+      if (!program) {
+        return res.status(400).json({
+          message: "Gagal Tambah Program",
+        });
+      }
+
+      await prisma.notification.create({
+        data: {
+          user: {
+            connect: {
+              user_id: Number(userId),
+            },
+          },
+          description: "Program Anda Telah Berhasil Dibuat, Silahkan Tunggu Konfirmasi Dari Admin",
+          title: "Program Baru",
+          type: "program",
+          program: {
+            connect: {
+              program_id: program.program_id,
+            },
+          },
+        },
+      });
+
+      res.status(200).json({
+        message: "Sukses Tambah Program",
+        data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
+  async getBanner(req, res) {
+    try {
+      const banner = await prisma.program.findMany({
+        orderBy: {
+          program_id: "asc",
+        },
+        where: {
+          program_status: 2,
+          program_isheadline: 1,
+        },
+        include: {
+          program_banner: {
+            select: {
+              banners_path: true,
+              banners_id: true,
+            },
+          },
+        },
+        take: 5,
+      });
+
+      return res.status(200).json({
+        message: "Sukses Ambil Data",
+        data: banner.map((item) => ({
+          program_id: item.program_id,
+          program_banner: {
+            banners_path: item.program_banner.banners_path,
+          },
+        })),
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+};
