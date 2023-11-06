@@ -13,6 +13,7 @@ app.use(bodyParser.json({limit: '50mb', extended: true}))
 const appRoute = require('./app/routes/route-auth');
 const homeRoute = require('./app/routes/route-home');
 const mustahiqRoute = require('./app/routes/route-mustahiq');
+const transRoute = require('./app/routes/route-transaction');
 
 app.use("/public/uploads", express.static(path.join(__dirname, "uploads/docs")));
 app.use("/public/banners", express.static(path.join(__dirname, "uploads/banners")));
@@ -23,6 +24,7 @@ app.use(cors({
 app.use('/auth', appRoute);
 app.use('/home', homeRoute);
 app.use('/mustahiq', mustahiqRoute);
+app.use('/transaction', transRoute);
 
 app.get('/', (req, res) => {
         res.send('Selamat Datang Di Portal ZISWAF Indosat');
