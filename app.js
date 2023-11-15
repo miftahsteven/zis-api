@@ -19,6 +19,7 @@ const appRoute = require("./app/routes/route-auth");
 const homeRoute = require("./app/routes/route-home");
 const userRoute = require("./app/routes/route-account");
 const mustahiqRoute = require("./app/routes/route-mustahiq");
+const bankRoute = require("./app/routes/route-bank");
 const transactionRoute = require("./app/routes/transaction");
 
 console.log(path.join(__dirname, "uploads"));
@@ -34,6 +35,7 @@ app.use("/auth", appRoute);
 app.use("/home", homeRoute);
 app.use("/user", userRoute);
 app.use("/mustahiq", mustahiqRoute);
+app.use("/bank", bankRoute);
 app.use("/transaction", transactionRoute);
 
 app.get("/", (req, res) => {

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://userziswaf:Zis321@@@149.129.225.79:234/ziswafApp"
+  url      = "mysql://userziswaf:Zis321@@@149.129.225.79:234/ziswafApp?connect_timeout=300"
 }
 
 model banners {
@@ -37,32 +37,35 @@ model institusi {
 }
 
 model program {
-  program_id            Int               @id @default(autoincrement())
-  program_kode          String?           @db.VarChar(10)
-  program_title         String            @db.VarChar(100)
-  program_short_desc    String?           @db.Text
-  program_start_date    DateTime?         @db.DateTime(0)
-  program_end_date      DateTime?         @db.DateTime(0)
-  program_description   String?           @db.Text
+  program_id            Int                     @id @default(autoincrement())
+  program_kode          String?                 @db.VarChar(10)
+  program_title         String                  @db.VarChar(100)
+  program_short_desc    String?                 @db.Text
+  program_start_date    DateTime?               @db.DateTime(0)
+  program_end_date      DateTime?               @db.DateTime(0)
+  program_description   String?                 @db.Text
   program_institusi_id  Int?
   program_target_amount BigInt
-  program_create        DateTime?         @default(now()) @db.Timestamp(0)
-  program_status        Int?              @default(1) @db.SmallInt
-  program_isheadline    Int?              @default(0) @db.SmallInt
-  program_banner_id     Int               @unique
+  program_create        DateTime?               @default(now()) @db.Timestamp(0)
+  program_status        Int?                    @default(1) @db.SmallInt
+  program_isheadline    Int?                    @default(0) @db.SmallInt
+  program_banner_id     Int                     @unique
   user_id               Int
-  notification          notification[]
-  program_banner        banners           @relation(fields: [program_banner_id], references: [banners_id])
-  program_institusi     institusi?        @relation(fields: [program_institusi_id], references: [institusi_id])
-  user                  user              @relation(fields: [user_id], references: [user_id])
-  transactions          transactions[]
-  program_category      program_category? @relation(fields: [program_category_id], references: [id])
   program_category_id   Int?
-  beneficiary           beneficiary?      @relation(fields: [beneficiary_id], references: [id])
   beneficiary_id        Int?
+  notification          notification[]
+  beneficiary           beneficiary?            @relation(fields: [beneficiary_id], references: [id])
+  program_banner        banners                 @relation(fields: [program_banner_id], references: [banners_id])
+  program_category      program_category?       @relation(fields: [program_category_id], references: [id])
+  program_institusi     institusi?              @relation(fields: [program_institusi_id], references: [institusi_id])
+  user                  user                    @relation(fields: [user_id], references: [user_id])
+  recurring_transaction recurring_transaction[]
+  transactions          transactions[]
 
   @@index([program_institusi_id], map: "program_program_institusi_id_fkey")
   @@index([user_id], map: "program_user_id_fkey")
+  @@index([beneficiary_id], map: "program_beneficiary_id_fkey")
+  @@index([program_category_id], map: "program_program_category_id_fkey")
 }
 
 model program_category {
@@ -73,24 +76,25 @@ model program_category {
 }
 
 model user {
-  user_id        Int             @id @default(autoincrement())
-  username       String          @unique(map: "user_UN") @db.VarChar(255)
-  user_password  String          @db.VarChar(255)
-  user_nama      String?         @db.VarChar(100)
-  user_phone     String?         @unique(map: "user_UN_2") @db.VarChar(100)
-  user_type      Int?            @default(0)
-  user_status    Int?            @default(0) @db.SmallInt
-  user_token     String?         @db.Text
-  user_reg_date  DateTime        @default(now()) @db.Timestamp(0)
-  mustahiq_id    Int?            @unique
-  institusi      institusi[]
-  notifications  notification[]
-  password_token password_token?
-  program        program[]
-  transactions   transactions[]
-  mustahiq       mustahiq?       @relation(fields: [mustahiq_id], references: [id])
-  type           UserType?       @relation(fields: [user_type], references: [user_type_id])
-  beneficiary    beneficiary[]
+  user_id               Int                     @id @default(autoincrement())
+  username              String                  @unique(map: "user_UN") @db.VarChar(255)
+  user_password         String                  @db.VarChar(255)
+  user_nama             String?                 @db.VarChar(100)
+  user_phone            String?                 @unique(map: "user_UN_2") @db.VarChar(100)
+  user_type             Int?                    @default(0)
+  user_status           Int?                    @default(0) @db.SmallInt
+  user_token            String?                 @db.Text
+  user_reg_date         DateTime                @default(now()) @db.Timestamp(0)
+  mustahiq_id           Int?                    @unique
+  beneficiary           beneficiary[]
+  institusi             institusi[]
+  notifications         notification[]
+  password_token        password_token?
+  program               program[]
+  recurring_transaction recurring_transaction[]
+  transactions          transactions[]
+  mustahiq              mustahiq?               @relation(fields: [mustahiq_id], references: [id])
+  type                  UserType?               @relation(fields: [user_type], references: [user_type_id])
 
   @@index([user_type], map: "user_user_type_fkey")
 }
@@ -138,9 +142,11 @@ model beneficiary {
   bank_number              String    @db.VarChar(255)
   imkas_number             String?   @db.VarChar(255)
   bank_account_name        String    @db.VarChar(255)
-  user                     user?     @relation(fields: [user_id], references: [user_id])
   user_id                  Int?
+  user                     user?     @relation(fields: [user_id], references: [user_id])
   program                  program[]
+
+  @@index([user_id], map: "beneficiary_user_id_fkey")
 }
 
 model password_token {
@@ -256,4 +262,20 @@ model atgla {
   athead athead @relation(fields: [ccode, fyear, docnr], references: [ccode, fyear, docnr])
 
   @@index([ccode, fyear, docnr], map: "atgla_ccode_fyear_docnr_fkey")
+}
+
+model recurring_transaction {
+  id               Int      @id @default(autoincrement())
+  program_id       Int?
+  user_id          Int?
+  amount           Int?
+  payment_method   String?  @db.VarChar(100)
+  recurring_status Int?     @default(0) @db.SmallInt
+  recurring_type   Int?     @default(0) @db.SmallInt
+  reminder_type    Int?     @default(0) @db.SmallInt
+  program          program? @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "recurring_transaction_program_id_FK")
+  user             user?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "recurring_transaction_user_id_FK")
+
+  @@index([program_id], map: "recurring_transaction_program_id_FK")
+  @@index([user_id], map: "recurring_transaction_user_id_FK")
 }
