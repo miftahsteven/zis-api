@@ -81,11 +81,11 @@ module.exports = {
   async recurring(req, res) {
     try {
       const userId = req.user_id;
-      const programId = req.body.programId;
+      const programId = req.body.program_id;
       const payment_method = req.body.payment_method;      
       const amount = req.body.amount;
-      const reminderType = req.body.reminderType;
-      const recurringType = req.body.recurringType;
+      const reminderType = req.body.reminder_type;
+      const recurringType = req.body.recurring_type;
 
       if (!programId) {
         return res.status(400).json({
@@ -115,8 +115,8 @@ module.exports = {
         data: {
           amount: Number(amount),          
           payment_method,
-          reminder_type: reminderType,
-          recurring_type: recurringType,
+          reminder_type: Number(reminderType),
+          recurring_type: Number(recurringType),
           user: {
             connect: {
               user_id: Number(userId),
