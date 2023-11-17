@@ -173,18 +173,21 @@ module.exports = {
           required_error: "Target Dana Harus Diisi",
           invalid_type_error: "Target Dana Harus Diisi",
         }),
-        program_category_id: z.number(),
       });
 
       //BODY
       const body = await schema.safeParseAsync({
-        ...req.body,
+        // ...req.body,
+        program_title: req.body.program_title,
+        program_short_desc: req.body.program_short_desc,
+        program_description: req.body.program_description,
         program_end_date: new Date(req.body.program_end_date),
         program_start_date: new Date(req.body.program_start_date),
         program_target_amount: Number(req.body.program_target_amount),
-        program_category_id: Number(req.body.program_category_id),
         program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
+
+      const program_cat_id = Number(req.body.program_category_id)
 
       let errorObj = {};
 
@@ -223,13 +226,13 @@ module.exports = {
       const { program_institusi_id, ...rest } = body.data;
 
       const userId = req.user_id;
-
+      console.log(body)
       const program = await prisma.program.create({
         data: {
           ...rest,
           program_category: {
             connect: {
-              id: body.data.program_category_id,
+              id: Number(program_cat_id),
             },
           },
           user: {
@@ -253,12 +256,12 @@ module.exports = {
           program_kode: nanoid(),
           ...(program_institusi_id
             ? {
-                program_institusi: {
-                  connect: {
-                    institusi_id: program_institusi_id,
-                  },
+              program_institusi: {
+                connect: {
+                  institusi_id: program_institusi_id,
                 },
-              }
+              },
+            }
             : {}),
         },
       });
