@@ -1,6 +1,6 @@
 const { generate } = require("../helper/auth-jwt");
 const { prisma } = require("../../prisma/client");
-const { z } = require("zod");
+const { z, number } = require("zod");
 const { nanoid } = require("nanoid");
 const argon2 = require("argon2");
 const { generateTemplate, sendEmail, generateTemplateForgotEmail } = require("../helper/email");
@@ -157,8 +157,8 @@ module.exports = {
 
   async updateUser(req, res) {
     try {
-      const userId = req.user_id;
-      const { nama, phone } = req.body;
+      const id = req.params.id;
+      const { nama, phone, type } = req.body;
 
       if (!nama || !phone) {
         return res.status(400).json({
@@ -168,11 +168,12 @@ module.exports = {
 
       await prisma.user.update({
         where: {
-          user_id: userId,
+          user_id: Number(id),
         },
         data: {
           user_nama: nama,
           user_phone: phone,
+          user_type: type
         },
       });
 
@@ -189,11 +190,11 @@ module.exports = {
 
   async detailUser(req, res) {
     try {
-      const userId = req.user_id;
+      const id = req.params.id;
 
       const user = await prisma.user.findUnique({
         where: {
-          user_id: userId,
+          user_id: Number(id),
         },
         include: {
           institusi: true,
@@ -207,13 +208,13 @@ module.exports = {
         });
       }
 
-      const omit = require("lodash/omit");
+      //const omit = require("lodash/omit");
 
-      const cleanUser = omit(user, ["user_password", "user_token"]);
+      //const cleanUser = omit(user, ["user_password", "user_token"]);
 
       return res.status(200).json({
         message: "Sukses",
-        data: cleanUser,
+        data: user,
       });
     } catch (error) {
       return res.status(500).json({
