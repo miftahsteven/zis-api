@@ -158,11 +158,11 @@ module.exports = {
   async updateUser(req, res) {
     try {
       const id = req.params.id;
-      const { nama, phone, type } = req.body;
+      const { nama, username, type } = req.body;
 
-      if (!nama || !phone) {
+      if (!nama || !username) {
         return res.status(400).json({
-          message: "Nama, dan Nomor Telepon harus diisi",
+          message: "Nama, dan Username harus diisi",
         });
       }
 
@@ -172,7 +172,7 @@ module.exports = {
         },
         data: {
           user_nama: nama,
-          user_phone: phone,
+          username: username,
           user_type: type
         },
       });
