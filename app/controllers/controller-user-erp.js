@@ -233,6 +233,7 @@ module.exports = {
         include: {
           institusi: true,
           mustahiq: true,
+          type:true
         },
       });
 
