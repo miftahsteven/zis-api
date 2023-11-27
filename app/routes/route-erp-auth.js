@@ -9,6 +9,7 @@ router.post("/login", usererp.loginUser);
 router.post("/register", authentication, usererp.registerUser);
 router.put("/update", authentication, usererp.updateUser);
 router.get("/users", authentication, usererp.AllUser);
-//router.post("/verifed", authentication, usererp.verifiedUser);
+router.put("/verifed/:id", authentication, usererp.verifiedUser);
+router.put("/updaterole/:id", authentication, usererp.updateRoles);
 
 module.exports = router;

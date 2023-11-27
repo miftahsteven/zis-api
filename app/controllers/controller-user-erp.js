@@ -255,4 +255,75 @@ module.exports = {
       });
     }
   },
+  async verifiedUser(req, res) {
+    try {
+      const id = req.params.id;
+      const { status } = req.body;
+
+      if (!id) {
+        return res.status(400).json({
+          message: "User Id Tidak Ada",
+        });
+      }
+      if (!status) {
+        return res.status(400).json({
+          message: "Data Status Tidak Ada",
+        });
+      }
+
+      await prisma.user.update({
+        where: {
+          user_id: Number(id),
+        },
+        data: {
+          user_status: status,          
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Verified User",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+  async updateRoles(req, res) {
+    try {
+      const id = req.params.id;
+      const { role } = req.body;
+
+      if (!id) {
+        return res.status(400).json({
+          message: "User Id Tidak Ada",
+        });
+      }
+
+      if (!role) {
+        return res.status(400).json({
+          message: "Role Id Tidak Ada",
+        });
+      }
+
+      await prisma.user.update({
+        where: {
+          user_id: Number(id),
+        },
+        data: {
+          user_type: role,          
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Update Data",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 };
