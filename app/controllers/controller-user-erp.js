@@ -328,4 +328,39 @@ module.exports = {
       });
     }
   },
+  async getDataType(req, res) {
+    try {
+      const userId = req.user_id;
+
+      const type = await prisma.UserType.findMany({
+        // where: {
+        //   user_id: userId,
+        // },
+        // include: {
+        //   institusi: true,
+        //   mustahiq: true,
+        //   type:true
+        // },
+      });
+
+    //   if (!user) {
+    //     return res.status(404).json({
+    //       message: "User tidak ditemukan",
+    //     });
+    //   }
+
+      //const omit = require("lodash/omit");
+
+      //const cleanUser = omit(user, ["user_password", "user_token"]);
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: type,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 };
