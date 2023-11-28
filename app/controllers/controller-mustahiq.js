@@ -31,6 +31,9 @@ module.exports = {
 
       const {
         address,
+        province,
+        kota,
+        kecamatan,
         bank_account_name,
         emergency_contact_name,
         emergency_contact_number,
@@ -70,6 +73,9 @@ module.exports = {
           kk_url: `uploads/${req.files?.ktp_file?.[0].filename}`,
           ktp_url: `uploads/${req.files?.kk_file?.[0].filename}`,
           address,
+          province,
+          kota,
+          kecamatan,
           emergency_contact_name,
           emergency_contact_number,
           bank_name,
