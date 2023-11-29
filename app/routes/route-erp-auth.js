@@ -13,5 +13,6 @@ router.get("/users", authentication, usererp.AllUser);
 router.put("/verifed/:id", authentication, usererp.verifiedUser);
 router.put("/updaterole/:id", authentication, usererp.updateRoles);
 router.get("/types", authentication, usererp.getDataType);
+router.delete("/remove", authentication, usererp.deleteUser);
 
 module.exports = router;

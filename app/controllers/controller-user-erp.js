@@ -188,6 +188,27 @@ module.exports = {
     }
   },
 
+  async deleteUser(req, res) {
+    try {
+      const id = req.params.id;
+
+      await prisma.user.delete({
+        where: {
+          user_id: Number(id),
+        }        
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Update Data",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
   async detailUser(req, res) {
     try {
       const id = req.params.id;
