@@ -107,11 +107,11 @@ module.exports = {
       const [program, totalDonation] = await prisma.$transaction([
         prisma.program.findUnique({
           where: {
-            program_id: parseInt(id),
+            program_id: parseInt(id), 
           },
           include: {
             program_banner: true,
-            program_institusi: true,
+            program_institusi: true,            
             transactions: {
               select: {
                 amount: true,

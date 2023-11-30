@@ -19,9 +19,13 @@ module.exports = {
       }
 
       const user = await prisma.user.findUnique({
-        where: {
+        include: {
+          type: true
+       },
+        where: {          
           username,
-        },
+          user_type: { in: [10,11] },          
+       },
       });
 
       if (!user) {

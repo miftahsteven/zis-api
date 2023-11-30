@@ -58,15 +58,14 @@ model program {
   program_banner        banners                 @relation(fields: [program_banner_id], references: [banners_id])
   program_category      program_category?       @relation(fields: [program_category_id], references: [id])
   program_institusi     institusi?              @relation(fields: [program_institusi_id], references: [institusi_id])
-  user                  user                    @relation(fields: [user_id], references: [user_id])
   proposal              proposal[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]
 
   @@index([program_institusi_id], map: "program_program_institusi_id_fkey")
-  @@index([user_id], map: "program_user_id_fkey")
   @@index([beneficiary_id], map: "program_beneficiary_id_fkey")
   @@index([program_category_id], map: "program_program_category_id_fkey")
+  @@index([user_id], map: "program_user_id_fkey")
 }
 
 model program_category {
@@ -97,7 +96,6 @@ model user {
   notifications         notification[]
   pettycash             pettycash[]
   pettycash_request     pettycash_request[]
-  program               program[]
   proposal              proposal[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]

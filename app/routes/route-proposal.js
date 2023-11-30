@@ -7,6 +7,7 @@ const { upload } = require("../helper/upload");
 // GET localhost:8080/home => Ambil data semua dari awal
 router.post("/create", authentication, proposal.createProposal);
 router.get("/details/:id", authentication, proposal.detailProposal);
+router.get("/all", authentication, proposal.getAllProposal);
 
 
 module.exports = router;

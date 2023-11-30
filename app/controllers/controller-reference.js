@@ -89,4 +89,61 @@ module.exports = {
           });
         }
       },
+
+      async glaccount(req, res) {
+        try {
+          //const id = req.params.id;
+    
+          const gla = await prisma.gl_account.findMany({
+            // where: {
+            //     id: Number(id)               
+            //   },
+          });
+    
+          if (!gla) {
+            return res.status(404).json({
+              message: "Data GL tidak ditemukan",
+            });
+          }
+    
+          
+    
+          return res.status(200).json({
+            message: "Sukses",
+            data: gla,
+          });
+        } catch (error) {
+          return res.status(500).json({
+            message: error?.message,
+          });
+        }
+      },
+      async glaccount(req, res) {
+        try {
+          //const id = req.params.id;
+    
+          const gla = await prisma.gl_account.findMany({
+            // where: {
+            //     id: Number(id)               
+            //   },
+          });
+    
+          if (!gla) {
+            return res.status(404).json({
+              message: "Data GL tidak ditemukan",
+            });
+          }
+    
+          
+    
+          return res.status(200).json({
+            message: "Sukses",
+            data: gla,
+          });
+        } catch (error) {
+          return res.status(500).json({
+            message: error?.message,
+          });
+        }
+      },
 }

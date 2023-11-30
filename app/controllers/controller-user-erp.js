@@ -19,18 +19,12 @@ module.exports = {
       }
 
       const user = await prisma.user.findUnique({
-        where: {
-          AND:{
+        include: {
+            type: true
+        },
+        where: {          
             username,
-            AND: {
-              user_type: {
-                  equals: 8
-              },
-              user_type: {
-                equals: 7
-            },
-          }           
-          }          
+            user_type: { in: [7, 8, 9, 12] },          
         },
       });
 
@@ -312,6 +306,9 @@ module.exports = {
           where: params,
         }),
         prisma.user.findMany({
+          include:{
+            type:true
+          },
           orderBy: {
             [sortBy]: sortType,
           },
