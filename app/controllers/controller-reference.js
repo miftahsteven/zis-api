@@ -90,19 +90,19 @@ module.exports = {
         }
       },
 
-      async glaccount(req, res) {
+      async gltype(req, res) {
         try {
           //const id = req.params.id;
     
-          const gla = await prisma.gl_account.findMany({
+          const gltype = await prisma.gl_account_type.findMany({
             // where: {
             //     id: Number(id)               
             //   },
           });
     
-          if (!gla) {
+          if (!gltype) {
             return res.status(404).json({
-              message: "Data GL tidak ditemukan",
+              message: "Data GL Type tidak ditemukan",
             });
           }
     
@@ -110,7 +110,7 @@ module.exports = {
     
           return res.status(200).json({
             message: "Sukses",
-            data: gla,
+            data: gltype,
           });
         } catch (error) {
           return res.status(500).json({
@@ -120,25 +120,174 @@ module.exports = {
       },
       async glaccount(req, res) {
         try {
-          //const id = req.params.id;
+          const page = Number(req.query.page || 1);
+          const perPage = Number(req.query.perPage || 10);
+          const status = Number(req.query.status || 4);
+          const skip = (page - 1) * perPage;
+          const keyword = req.query.keyword || "";
+          const user_type = req.query.user_type || "";
+          const category = req.query.category || "";
+          const sortBy = req.query.sortBy || "id";
+          const sortType = req.query.order || "asc";
     
-          const gla = await prisma.gl_account.findMany({
-            // where: {
-            //     id: Number(id)               
-            //   },
+          const params = {                    
+            gl_name: {
+              contains: keyword,
+            },            
+          };
+    
+          const [count, gla] = await prisma.$transaction([
+            prisma.gl_account.count({
+              where: params,
+            }),
+            prisma.gl_account.findMany({
+              include:{
+                gl_account_type:true
+              },
+              orderBy: {
+                [sortBy]: sortType,
+              },
+              where: params,         
+              skip,
+              take: perPage,
+            }),
+          ]);
+    
+          const glResult = await Promise.all(
+            gla.map(async (item) => {
+              
+    
+              return {
+                ...item
+                //program_target_amount: Number(item.program_target_amount),
+                //total_donation: total_donation._sum.amount || 0,
+              };
+            })
+          );
+    
+          res.status(200).json({
+            // aggregate,
+            message: "Sukses Ambil Data",
+    
+            data: glResult,
+            pagination: {
+              total: count,
+              page,
+              hasNext: count > page * perPage,
+              totalPage: Math.ceil(count / perPage),
+            },
           });
+        } catch (error) {
+          res.status(500).json({
+            message: error?.message,
+          });
+        }
+      },
+
+      async createGlAccount(req, res) {
+        try {
+          const userId = req.user_id;
+                    
+          const {
+            coa,
+            description,
+            gl_account,
+            gl_group,
+            gl_name,
+            status,
+            gl_type
+          } = req.body;
     
-          if (!gla) {
-            return res.status(404).json({
-              message: "Data GL tidak ditemukan",
-            });
-          }
-    
-          
+          //console.log(JSON.stringify(req.body))
+            
+          const glResult = await prisma.gl_account.create({
+            data: {
+              gl_account_type: {
+                connect: {
+                  id: Number(gl_type),
+                },
+              },              
+              coa,
+              description,
+              gl_account,
+              gl_group,
+              gl_name,
+              status              
+            },
+          });
     
           return res.status(200).json({
             message: "Sukses",
-            data: gla,
+            data: glResult,
+          });
+        } catch (error) {
+              
+          return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+          });
+        }
+      },
+      async updateGlAccount(req, res) {
+        try {
+          const id = req.params.id;
+                    
+          const {
+            coa,
+            description,
+            gl_account,
+            gl_group,
+            gl_name,
+            status,
+            gl_type
+          } = req.body;
+    
+          //console.log(JSON.stringify(req.body))
+            
+          const glResult = await prisma.gl_account.update({
+            where: {
+              id: Number(id),
+            },
+            data: {
+              gl_account_type: {
+                connect: {
+                  id: Number(gl_type),
+                },
+              },              
+              coa,
+              description,
+              gl_account,
+              gl_group,
+              gl_name,
+              status              
+            },
+          });
+    
+          return res.status(200).json({
+            message: "Sukses",
+            data: glResult,
+          });
+        } catch (error) {
+              
+          return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+          });
+        }
+      },
+      async deleteGL(req, res) {
+        try {
+          const id = req.body.id;
+    
+          await prisma.gl_account.delete({
+            where: {
+              id: Number(id),
+            }        
+          });
+    
+          return res.status(200).json({
+            message: "Sukses",
+            data: "Berhasil Update Data",
           });
         } catch (error) {
           return res.status(500).json({

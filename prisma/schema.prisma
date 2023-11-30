@@ -419,6 +419,9 @@ model proposal {
   jumlah_tanggungan           Int?      @default(0) @db.SmallInt
   jenis_bantuan_kesehatan     String?   @default("0") @db.VarChar(255)
   create_date                 DateTime? @default(now()) @db.Timestamp(0)
+  status_approval             Int?      @default(0) @db.SmallInt
+  status_perintah_bayar       Int?      @default(0) @db.SmallInt
+  status_bayar                Int?      @default(0) @db.SmallInt
   user                        user?     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
   program                     program?  @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
 
