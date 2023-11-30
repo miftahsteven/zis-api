@@ -36,7 +36,6 @@ module.exports = {
           },
           where: params,
           include: {
-            user:true,
             program_category: true,
             program_institusi: {
               select: {
