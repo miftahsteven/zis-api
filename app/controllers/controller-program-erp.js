@@ -35,7 +35,7 @@ module.exports = {
             [sortBy]: sortType,
           },
           where: params,
-          include: {
+          include: {            
             program_category: true,
             program_institusi: {
               select: {
