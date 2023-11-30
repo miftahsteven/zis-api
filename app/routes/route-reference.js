@@ -8,5 +8,7 @@ const { upload } = require("../helper/upload");
 router.get("/provinces", refData.provinces);
 router.get("/cities/:id", refData.cities);
 router.get("/districts/:id", refData.districts);
+router.get("/gla", authentication, refData.glaccount);
+router.get("/gla", authentication, refData.glaccount);
 
 module.exports = router;

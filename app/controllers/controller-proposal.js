@@ -135,6 +135,73 @@ module.exports = {
     }
   },
   
+  async getAllProposal(req, res) {
+    try {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 4);
+      const skip = (page - 1) * perPage;
+      const keyword = req.query.keyword || "";
+      const user_type = req.query.user_type || "";
+      const category = req.query.category || "";
+      const sortBy = req.query.sortBy || "user_id";
+      const sortType = req.query.order || "asc";
+
+      const params = {        
+        nama: {
+          contains: keyword,
+        }        
+      };
+
+      const [count, proposals] = await prisma.$transaction([
+        prisma.proposal.count({
+          where: params,
+        }),
+        prisma.proposal.findMany({
+          include:{
+            user:true,
+            //program:true
+            //mustahiq: true
+          },
+          orderBy: {
+            [sortBy]: sortType,
+          },
+          where: params,         
+          skip,
+          take: perPage,
+        }),
+      ]);
+
+      const propResult = await Promise.all(
+        proposals.map(async (item) => {
+          
+
+          return {
+            ...item
+            //program_target_amount: Number(item.program_target_amount),
+            //total_donation: total_donation._sum.amount || 0,
+          };
+        })
+      );
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: propResult,
+        pagination: {
+          total: count,
+          page,
+          hasNext: count > page * perPage,
+          totalPage: Math.ceil(count / perPage),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
   
   async detailProposal(req, res) {
     try {
@@ -170,4 +237,5 @@ module.exports = {
       });
     }
   },
+
 };
