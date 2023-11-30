@@ -9,7 +9,7 @@ router.post("/login", usererp.loginUser);
 router.post("/register", authentication, usererp.registerUser);
 router.get("/detail/:id", authentication, usererp.detailUser);
 router.put("/update/:id", authentication, usererp.updateUser);
-router.get("/users", authentication, usererp.AllUser);
+router.get("/users", authentication, usererp.getAllUser);
 router.put("/verifed/:id", authentication, usererp.verifiedUser);
 router.put("/updaterole/:id", authentication, usererp.updateRoles);
 router.get("/types", authentication, usererp.getDataType);

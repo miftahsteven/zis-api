@@ -20,7 +20,17 @@ module.exports = {
 
       const user = await prisma.user.findUnique({
         where: {
-          username,
+          AND:{
+            username,
+            AND: {
+              user_type: {
+                  equals: 8
+              },
+              user_type: {
+                equals: 7
+            },
+          }           
+          }          
         },
       });
 
@@ -75,7 +85,7 @@ module.exports = {
         email: z.string().email(),
         nama: z.string(),
         phone: z.string().min(10),
-        type: z.string(),
+        type: z.number(),
       });
 
       const { email, nama, phone, type } = req.body;
@@ -158,11 +168,11 @@ module.exports = {
   async updateUser(req, res) {
     try {
       const id = req.params.id;
-      const { nama, username, type } = req.body;
+      const { user_nama, user_phone, user_type } = req.body;
 
-      if (!nama || !username) {
+      if (!user_nama || !user_phone) {
         return res.status(400).json({
-          message: "Nama, dan Username harus diisi",
+          message: "Nama, dan No.Hanphone harus diisi",
         });
       }
 
@@ -171,9 +181,9 @@ module.exports = {
           user_id: Number(id),
         },
         data: {
-          user_nama: nama,
-          username: username,
-          user_type: type
+          user_nama: user_nama,
+          user_phone: user_phone,
+          user_type: Number(user_type)
         },
       });
 
@@ -190,11 +200,11 @@ module.exports = {
 
   async deleteUser(req, res) {
     try {
-      const id = req.params.id;
+      const user_id = req.body.user_id;
 
       await prisma.user.delete({
         where: {
-          user_id: Number(id),
+          user_id: Number(user_id),
         }        
       });
 
@@ -274,6 +284,69 @@ module.exports = {
       });
     } catch (error) {
       return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+  async getAllUser(req, res) {
+    try {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 4);
+      const skip = (page - 1) * perPage;
+      const keyword = req.query.keyword || "";
+      const user_type = req.query.user_type || "";
+      const category = req.query.category || "";
+      const sortBy = req.query.sortBy || "user_id";
+      const sortType = req.query.order || "asc";
+
+      const params = {        
+        user_nama: {
+          contains: keyword,
+        },
+        ...(user_type ? { user_type: Number(user_type) } : {}),
+      };
+
+      const [count, user] = await prisma.$transaction([
+        prisma.user.count({
+          where: params,
+        }),
+        prisma.user.findMany({
+          orderBy: {
+            [sortBy]: sortType,
+          },
+          where: params,         
+          skip,
+          take: perPage,
+        }),
+      ]);
+
+      const userResult = await Promise.all(
+        user.map(async (item) => {
+          
+
+          return {
+            ...item
+            //program_target_amount: Number(item.program_target_amount),
+            //total_donation: total_donation._sum.amount || 0,
+          };
+        })
+      );
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: userResult,
+        pagination: {
+          total: count,
+          page,
+          hasNext: count > page * perPage,
+          totalPage: Math.ceil(count / perPage),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
         message: error?.message,
       });
     }

@@ -59,6 +59,7 @@ model program {
   program_category      program_category?       @relation(fields: [program_category_id], references: [id])
   program_institusi     institusi?              @relation(fields: [program_institusi_id], references: [institusi_id])
   user                  user                    @relation(fields: [user_id], references: [user_id])
+  proposal              proposal[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]
 
@@ -97,6 +98,7 @@ model user {
   pettycash             pettycash[]
   pettycash_request     pettycash_request[]
   program               program[]
+  proposal              proposal[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]
   mustahiq              mustahiq?               @relation(fields: [mustahiq_id], references: [id], onUpdate: NoAction)
@@ -207,33 +209,31 @@ model transactions {
 }
 
 model bank_account {
-  id          Int           @id @default(autoincrement())
-  bank_name   String        @db.VarChar(255)
-  bank_number String        @db.VarChar(255)
-  ebs_staging ebs_staging[]
+  id          Int    @id @default(autoincrement())
+  bank_name   String @db.VarChar(255)
+  bank_number String @db.VarChar(255)
 }
 
 model ebs_staging {
-  id             Int          @id @default(autoincrement())
-  account_number Int
-  trans_ref      String?      @db.VarChar(50)
-  bank_date      String?      @db.VarChar(8)
-  state_num      String?      @db.VarChar(25)
-  currency       String?      @db.VarChar(3)
-  ob_amount      String?      @db.VarChar(200)
-  ob_ind         String?      @db.VarChar(50)
-  eb_amount      String?      @db.VarChar(200)
-  eb_ind         String?      @db.VarChar(50)
-  trans_date     String?      @db.VarChar(8)
-  trans_type     String?      @db.VarChar(27)
-  trans_amount   String?      @db.VarChar(27)
-  trans_id       String?      @db.VarChar(27)
-  text_info      String?      @db.VarChar(200)
-  ebs_info1      String?      @db.VarChar(50)
-  ebs_info2      String?      @db.VarChar(50)
-  ebs_info3      String?      @db.VarChar(50)
-  ebs_filename   String?      @db.VarChar(255)
-  bank_account   bank_account @relation(fields: [account_number], references: [id])
+  id             Int     @id @default(autoincrement())
+  account_number String? @db.VarChar(50)
+  trans_ref      String? @db.VarChar(50)
+  bank_date      String? @db.VarChar(50)
+  state_num      String? @db.VarChar(25)
+  currency       String? @db.VarChar(3)
+  ob_amount      String? @db.VarChar(200)
+  ob_ind         String? @db.VarChar(50)
+  eb_amount      String? @db.VarChar(200)
+  eb_ind         String? @db.VarChar(50)
+  trans_date     String? @db.VarChar(50)
+  trans_type     String? @db.VarChar(27)
+  trans_amount   String? @db.VarChar(27)
+  trans_id       String? @db.VarChar(27)
+  text_info      String? @db.VarChar(200)
+  ebs_info1      String? @db.VarChar(50)
+  ebs_info2      String? @db.VarChar(50)
+  ebs_info3      String? @db.VarChar(50)
+  ebs_filename   String? @db.VarChar(255)
 
   @@index([account_number], map: "ebs_staging_account_number_fkey")
 }
@@ -344,4 +344,86 @@ model pettycash_request {
   user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_request_FK")
 
   @@index([user_id], map: "pettycash_request_FK")
+}
+
+model provinces {
+  prov_id         Int      @id @default(autoincrement())
+  prov_name       String?  @db.VarChar(255)
+  locationid      Int?
+  status          Int?     @default(1)
+  province_by_dpt Int?     @default(0)
+  cities          cities[]
+}
+
+model cities {
+  city_id   Int         @id @default(autoincrement())
+  city_name String?     @db.VarChar(255)
+  prov_id   Int?
+  provinces provinces?  @relation(fields: [prov_id], references: [prov_id], onDelete: NoAction, onUpdate: NoAction, map: "cities_FK")
+  districts districts[]
+
+  @@index([prov_id], map: "cities_FK")
+}
+
+model districts {
+  dis_id   Int     @id @default(autoincrement())
+  dis_name String? @db.VarChar(255)
+  city_id  Int?
+  ket      String? @db.VarChar(100)
+  cities   cities? @relation(fields: [city_id], references: [city_id], onDelete: NoAction, onUpdate: NoAction, map: "districts_FK")
+
+  @@index([city_id], map: "districts_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model proposal {
+  id                          Int       @id @default(autoincrement())
+  user_id                     Int?
+  program_id                  Int?
+  nama                        String?   @db.VarChar(100)
+  tempat_lahir                String?   @db.VarChar(100)
+  tgl_lahir                   String?   @db.VarChar(15)
+  jenis_kelamin               Int?      @default(0) @db.SmallInt
+  alamat_rumah                String?   @db.VarChar(255)
+  kode_pos                    String?   @db.VarChar(6)
+  status_rumah                Int?      @default(0) @db.SmallInt
+  status_pernikahan           Int?      @default(0) @db.SmallInt
+  jumlah_anak                 Int?      @default(0) @db.SmallInt
+  penghasilan_bulanan         Int?
+  nama_pasangan               String?   @db.VarChar(100)
+  pekerjaan                   String?   @db.VarChar(100)
+  pendidikan_terakhir         Int?      @default(0) @db.SmallInt
+  nama_sekolah_universitas    String?   @db.VarChar(100)
+  fakultas                    String?   @db.VarChar(100)
+  jurusan                     String?   @db.VarChar(100)
+  tempat_mengajar             String?   @db.VarChar(255)
+  alamat_mengajar             String?   @db.VarChar(255)
+  nomor_telp_sekolah_kampus   String?   @db.VarChar(15)
+  sebagai_guru                String?   @db.VarChar(100)
+  bantuan_pihak_lain          String?   @db.VarChar(255)
+  nominal_bantuan             Int?
+  nama_pemberi_rekomendasi    String?   @db.VarChar(100)
+  alamat_pemberi_rekomendasi  String?   @db.VarChar(255)
+  no_telp_pemberi_rekomendasi String?   @db.VarChar(15)
+  proposal_kategori           Int?      @default(0) @db.SmallInt
+  status_domisili             Int?      @default(0) @db.SmallInt
+  kelas_semester_saat_ini     String?   @db.VarChar(100)
+  alamat_sekolah_kampus       String?   @db.VarChar(100)
+  biaya_pendidikan_bulanan    Int?
+  organisasi_yang_diikuti     String?   @db.VarChar(255)
+  nama_ayah                   String?   @db.VarChar(100)
+  pekerjaan_ayah              String?   @db.VarChar(100)
+  penghasilan_bulanan_ayah    Int?
+  nama_ibu                    String?   @db.VarChar(100)
+  pekerjaan_ibu               String?   @db.VarChar(100)
+  penghasilan_bulanan_ibu     Int?
+  biaya_hidup_bulanan         Int?
+  jumlah_tanggungan           Int?      @default(0) @db.SmallInt
+  jenis_bantuan_kesehatan     String?   @default("0") @db.VarChar(255)
+  create_date                 DateTime? @default(now()) @db.Timestamp(0)
+  user                        user?     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
+  program                     program?  @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
+
+  @@index([user_id], map: "proposal_FK")
+  @@index([program_id], map: "proposal_FK_1")
 }
