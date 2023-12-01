@@ -207,9 +207,10 @@ model transactions {
 }
 
 model bank_account {
-  id          Int    @id @default(autoincrement())
-  bank_name   String @db.VarChar(255)
-  bank_number String @db.VarChar(255)
+  id          Int       @id @default(autoincrement())
+  bank_name   String    @db.VarChar(255)
+  bank_number String    @db.VarChar(255)
+  mt_file     mt_file[]
 }
 
 model ebs_staging {
@@ -454,10 +455,13 @@ model proposal_approval {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mt_file {
-  id       Int?
-  filename String?   @db.VarChar(255)
-  path     String?   @db.Text
-  date     DateTime? @default(now()) @db.Timestamp(0)
+  id           Int           @id
+  filename     String?       @db.VarChar(255)
+  path         String?       @db.Text
+  date         DateTime?     @default(now()) @db.Timestamp(0)
+  bank         Int?
+  bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
 
+  @@index([bank], map: "mt_file_FK")
   @@ignore
 }

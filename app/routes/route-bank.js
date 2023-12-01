@@ -7,6 +7,8 @@ const { authentication, authorization } = require("../../config/auth");
 
 // GET localhost:8080/home => Ambil data semua dari awal
 router.get('/mt940', bank.getDataMt940);
+router.get('/alldata', authentication, bank.dataMt940);
+router.get('/list', authentication, bank.listbank);
 
 
 module.exports = router;
