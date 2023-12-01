@@ -8,6 +8,7 @@ const { upload } = require("../helper/upload");
 router.post("/create", authentication, proposal.createProposal);
 router.get("/details/:id", authentication, proposal.detailProposal);
 router.get("/all", authentication, proposal.getAllProposal);
+router.post("/approved", authentication, proposal.approvalProposal);
 
 
 module.exports = router;

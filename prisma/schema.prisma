@@ -375,56 +375,88 @@ model districts {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model proposal {
-  id                          Int       @id @default(autoincrement())
+  id                          Int                 @id @default(autoincrement())
   user_id                     Int?
   program_id                  Int?
-  nama                        String?   @db.VarChar(100)
-  tempat_lahir                String?   @db.VarChar(100)
-  tgl_lahir                   String?   @db.VarChar(15)
-  jenis_kelamin               Int?      @default(0) @db.SmallInt
-  alamat_rumah                String?   @db.VarChar(255)
-  kode_pos                    String?   @db.VarChar(6)
-  status_rumah                Int?      @default(0) @db.SmallInt
-  status_pernikahan           Int?      @default(0) @db.SmallInt
-  jumlah_anak                 Int?      @default(0) @db.SmallInt
+  nama                        String?             @db.VarChar(100)
+  tempat_lahir                String?             @db.VarChar(100)
+  tgl_lahir                   String?             @db.VarChar(15)
+  jenis_kelamin               Int?                @default(0) @db.SmallInt
+  alamat_rumah                String?             @db.VarChar(255)
+  kode_pos                    String?             @db.VarChar(6)
+  status_rumah                Int?                @default(0) @db.SmallInt
+  status_pernikahan           Int?                @default(0) @db.SmallInt
+  jumlah_anak                 Int?                @default(0) @db.SmallInt
   penghasilan_bulanan         Int?
-  nama_pasangan               String?   @db.VarChar(100)
-  pekerjaan                   String?   @db.VarChar(100)
-  pendidikan_terakhir         Int?      @default(0) @db.SmallInt
-  nama_sekolah_universitas    String?   @db.VarChar(100)
-  fakultas                    String?   @db.VarChar(100)
-  jurusan                     String?   @db.VarChar(100)
-  tempat_mengajar             String?   @db.VarChar(255)
-  alamat_mengajar             String?   @db.VarChar(255)
-  nomor_telp_sekolah_kampus   String?   @db.VarChar(15)
-  sebagai_guru                String?   @db.VarChar(100)
-  bantuan_pihak_lain          String?   @db.VarChar(255)
+  nama_pasangan               String?             @db.VarChar(100)
+  pekerjaan                   String?             @db.VarChar(100)
+  pendidikan_terakhir         Int?                @default(0) @db.SmallInt
+  nama_sekolah_universitas    String?             @db.VarChar(100)
+  fakultas                    String?             @db.VarChar(100)
+  jurusan                     String?             @db.VarChar(100)
+  tempat_mengajar             String?             @db.VarChar(255)
+  alamat_mengajar             String?             @db.VarChar(255)
+  nomor_telp_sekolah_kampus   String?             @db.VarChar(15)
+  sebagai_guru                String?             @db.VarChar(100)
+  bantuan_pihak_lain          String?             @db.VarChar(255)
   nominal_bantuan             Int?
-  nama_pemberi_rekomendasi    String?   @db.VarChar(100)
-  alamat_pemberi_rekomendasi  String?   @db.VarChar(255)
-  no_telp_pemberi_rekomendasi String?   @db.VarChar(15)
-  proposal_kategori           Int?      @default(0) @db.SmallInt
-  status_domisili             Int?      @default(0) @db.SmallInt
-  kelas_semester_saat_ini     String?   @db.VarChar(100)
-  alamat_sekolah_kampus       String?   @db.VarChar(100)
+  nama_pemberi_rekomendasi    String?             @db.VarChar(100)
+  alamat_pemberi_rekomendasi  String?             @db.VarChar(255)
+  no_telp_pemberi_rekomendasi String?             @db.VarChar(15)
+  proposal_kategori           Int?                @default(0) @db.SmallInt
+  status_domisili             Int?                @default(0) @db.SmallInt
+  kelas_semester_saat_ini     String?             @db.VarChar(100)
+  alamat_sekolah_kampus       String?             @db.VarChar(100)
   biaya_pendidikan_bulanan    Int?
-  organisasi_yang_diikuti     String?   @db.VarChar(255)
-  nama_ayah                   String?   @db.VarChar(100)
-  pekerjaan_ayah              String?   @db.VarChar(100)
+  organisasi_yang_diikuti     String?             @db.VarChar(255)
+  nama_ayah                   String?             @db.VarChar(100)
+  pekerjaan_ayah              String?             @db.VarChar(100)
   penghasilan_bulanan_ayah    Int?
-  nama_ibu                    String?   @db.VarChar(100)
-  pekerjaan_ibu               String?   @db.VarChar(100)
+  nama_ibu                    String?             @db.VarChar(100)
+  pekerjaan_ibu               String?             @db.VarChar(100)
   penghasilan_bulanan_ibu     Int?
   biaya_hidup_bulanan         Int?
-  jumlah_tanggungan           Int?      @default(0) @db.SmallInt
-  jenis_bantuan_kesehatan     String?   @default("0") @db.VarChar(255)
-  create_date                 DateTime? @default(now()) @db.Timestamp(0)
-  status_approval             Int?      @default(0) @db.SmallInt
-  status_perintah_bayar       Int?      @default(0) @db.SmallInt
-  status_bayar                Int?      @default(0) @db.SmallInt
-  user                        user?     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
-  program                     program?  @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
+  jumlah_tanggungan           Int?                @default(0) @db.SmallInt
+  jenis_bantuan_kesehatan     String?             @default("0") @db.VarChar(255)
+  create_date                 DateTime?           @default(now()) @db.Timestamp(0)
+  status_approval             Int?                @default(0) @db.SmallInt
+  tanggal_approval            DateTime?           @db.DateTime(0)
+  user_approver_id            Int?
+  status_approval2            Int?                @default(0) @db.SmallInt
+  tanggal_approval2           DateTime?           @db.DateTime(0)
+  status_perintah_bayar       Int?                @default(0) @db.SmallInt
+  status_approval3            Int?                @default(0) @db.SmallInt
+  tanggal_approval3           DateTime?           @db.DateTime(0)
+  user_approver_id3           Int?
+  status_bayar                Int?                @default(0) @db.SmallInt
+  dana_yang_diajukan          Int?                @default(0)
+  user_approver_id2           Int?
+  status_all                  Int?                @default(0) @db.SmallInt
+  user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
+  program                     program?            @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
+  proposal_approval           proposal_approval[]
 
   @@index([user_id], map: "proposal_FK")
   @@index([program_id], map: "proposal_FK_1")
+}
+
+model proposal_approval {
+  id          Int       @id @default(autoincrement())
+  proposal_id Int?
+  user_id     Int?
+  date        DateTime? @default(now()) @db.Timestamp(0)
+  status      Int?      @default(0) @db.SmallInt
+  proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
+
+  @@index([proposal_id], map: "proposal_approval_FK")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mt_file {
+  id       Int?
+  filename String?   @db.VarChar(255)
+  path     String?   @db.Text
+  date     DateTime? @default(now()) @db.Timestamp(0)
+
+  @@ignore
 }
