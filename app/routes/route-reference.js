@@ -14,4 +14,10 @@ router.post("/addgl", authentication, refData.createGlAccount);
 router.put("/updategl/:id", authentication, refData.updateGlAccount);
 router.delete("/removegl", authentication, refData.deleteGL);
 
+router.get("/masterbank", authentication, refData.masterbank);
+router.post("/addbank", authentication, refData.createMasterBank);
+router.put("/updatebank/:id", authentication, refData.updateBank);
+router.delete("/removebank", authentication, refData.deleteBank);
+
+
 module.exports = router;
