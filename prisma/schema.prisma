@@ -446,6 +446,7 @@ model proposal_approval {
   user_id     Int?
   date        DateTime? @default(now()) @db.Timestamp(0)
   status      Int?      @default(0) @db.SmallInt
+  flag        Int?      @default(0) @db.SmallInt
   proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
 
   @@index([proposal_id], map: "proposal_approval_FK")
