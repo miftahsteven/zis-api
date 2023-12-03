@@ -445,7 +445,7 @@ model proposal {
   dana_yang_disetujui         Int?
   jurnal                      jurnal[]
   user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
-  program                     program?            @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
+  program                     program?            @relation(fields: [program_id], references: [program_id], onUpdate: SetNull, map: "proposal_FK_1")
   proposal_approval           proposal_approval[]
 
   @@index([user_id], map: "proposal_FK")

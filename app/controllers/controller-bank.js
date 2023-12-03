@@ -123,10 +123,14 @@ module.exports ={
         const sortType = req.query.order || "asc";
   
         const params = {      
-          mt_file_id: Number(id),
-          text_info: {
-            contains: keyword,
-          },            
+          AND: [
+            {mt_file_id: Number(id)},
+            {
+              text_info: {
+                contains: keyword,
+              },  
+            }
+          ]     
         };
   
         const [count, bank] = await prisma.$transaction([
@@ -275,6 +279,63 @@ module.exports ={
         });
       }
     },
+
+    async listGla(req, res) {
+      try {
+        //const userId = req.user_id;
+  
+        const glacc = await prisma.gl_account.findMany({
+          
+        });
+  
+        if (!glacc) {
+          return res.status(404).json({
+            message: "Bank tidak ditemukan",
+          });
+        }
+  
+        
+  
+        return res.status(200).json({
+          message: "Sukses",
+          data: glacc,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          message: error?.message,
+        });
+      }
+    },
+
+    async listProposal(req, res) {
+      try {
+        //const userId = req.user_id;
+  
+        const glacc = await prisma.program.findMany({
+            include:{
+              proposal: true
+            }
+        });
+  
+        if (!glacc) {
+          return res.status(404).json({
+            message: "Bank tidak ditemukan",
+          });
+        }
+  
+        
+  
+        return res.status(200).json({
+          message: "Sukses",
+          data: glacc,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          message: error?.message,
+        });
+      }
+    },
+
 
     async statementCreate(req, res) {
       try {        

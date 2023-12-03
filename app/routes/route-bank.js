@@ -14,6 +14,9 @@ router.post('/mt940', authentication, bank.getDataMt940);
 router.get('/alldata/:id', authentication, bank.dataMt940);
 router.get('/allfile', authentication, bank.dataFileMt940);
 router.get('/list', authentication, bank.listbank);
+router.get('/listgla', authentication, bank.listGla);
+router.get('/listproposal', authentication, bank.listProposal);
+
 router.post("/upload", authentication, upload.single("statement"), bank.statementCreate);
 
 
