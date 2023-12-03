@@ -21,6 +21,7 @@ const userRoute = require("./app/routes/route-account");
 const mustahiqRoute = require("./app/routes/route-mustahiq");
 const bankRoute = require("./app/routes/route-bank");
 const proposalRoute = require("./app/routes/route-proposal");
+const jurnal = require("./app/routes/route-jurnal");
 const refRoute = require("./app/routes/route-reference");
 const transactionRoute = require("./app/routes/transaction");
 
@@ -43,6 +44,7 @@ app.use("/mustahiq", mustahiqRoute);
 app.use("/bank", bankRoute);
 app.use("/ref", refRoute);
 app.use("/proposal", proposalRoute);
+app.use("/jurnal", jurnal);
 app.use("/transaction", transactionRoute);
 
 //ERP
