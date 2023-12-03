@@ -20,11 +20,11 @@ module.exports = {
 
       const user = await prisma.user.findUnique({
         include: {
-            type: true
+          type: true,
         },
-        where: {          
-            username,
-            user_type: { in: [7, 8, 9, 12] },          
+        where: {
+          username,
+          user_type: { in: [7, 8, 9, 12] },
         },
       });
 
@@ -177,7 +177,7 @@ module.exports = {
         data: {
           user_nama: user_nama,
           user_phone: user_phone,
-          user_type: Number(user_type)
+          user_type: Number(user_type),
         },
       });
 
@@ -199,7 +199,7 @@ module.exports = {
       await prisma.user.delete({
         where: {
           user_id: Number(user_id),
-        }        
+        },
       });
 
       return res.status(200).json({
@@ -258,7 +258,7 @@ module.exports = {
         include: {
           institusi: true,
           mustahiq: true,
-          type:true
+          type: true,
         },
       });
 
@@ -294,7 +294,7 @@ module.exports = {
       const sortBy = req.query.sortBy || "user_id";
       const sortType = req.query.order || "asc";
 
-      const params = {        
+      const params = {
         user_nama: {
           contains: keyword,
         },
@@ -306,13 +306,13 @@ module.exports = {
           where: params,
         }),
         prisma.user.findMany({
-          include:{
-            type:true
+          include: {
+            type: true,
           },
           orderBy: {
             [sortBy]: sortType,
           },
-          where: params,         
+          where: params,
           skip,
           take: perPage,
         }),
@@ -320,10 +320,8 @@ module.exports = {
 
       const userResult = await Promise.all(
         user.map(async (item) => {
-          
-
           return {
-            ...item
+            ...item,
             //program_target_amount: Number(item.program_target_amount),
             //total_donation: total_donation._sum.amount || 0,
           };
@@ -369,7 +367,7 @@ module.exports = {
           user_id: Number(id),
         },
         data: {
-          user_status: status,          
+          user_status: status,
         },
       });
 
@@ -405,7 +403,7 @@ module.exports = {
           user_id: Number(id),
         },
         data: {
-          user_type: role,          
+          user_type: role,
         },
       });
 
@@ -434,11 +432,11 @@ module.exports = {
         // },
       });
 
-    //   if (!user) {
-    //     return res.status(404).json({
-    //       message: "User tidak ditemukan",
-    //     });
-    //   }
+      //   if (!user) {
+      //     return res.status(404).json({
+      //       message: "User tidak ditemukan",
+      //     });
+      //   }
 
       //const omit = require("lodash/omit");
 

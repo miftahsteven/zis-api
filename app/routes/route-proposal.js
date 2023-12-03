@@ -9,6 +9,6 @@ router.post("/create", authentication, proposal.createProposal);
 router.get("/details/:id", authentication, proposal.detailProposal);
 router.get("/all", authentication, proposal.getAllProposal);
 router.post("/approved", authentication, proposal.approvalProposal);
-
+router.post("/update/:id", authentication, proposal.updateProposal);
 
 module.exports = router;
