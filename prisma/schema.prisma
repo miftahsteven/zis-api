@@ -98,6 +98,7 @@ model user {
   pettycash             pettycash[]
   pettycash_request     pettycash_request[]
   proposal              proposal[]
+  proposal_approval     proposal_approval[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]
   mustahiq              mustahiq?               @relation(fields: [mustahiq_id], references: [id], onUpdate: NoAction)
@@ -470,8 +471,10 @@ model proposal_approval {
   status      Int?      @default(0) @db.SmallInt
   flag        Int?      @default(0) @db.SmallInt
   proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
+  user        user?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([proposal_id], map: "proposal_approval_FK")
+  @@index([user_id], map: "proposal_approval_user_id_fkey")
 }
 
 model ebs_validation {

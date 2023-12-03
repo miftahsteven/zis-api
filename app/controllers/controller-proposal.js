@@ -192,6 +192,7 @@ module.exports = {
         alamat_pemberi_rekomendasi,
         no_telp_pemberi_rekomendasi,
         dana_yang_diajukan,
+        dana_yang_disetujui,
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
@@ -258,6 +259,7 @@ module.exports = {
           nama_pemberi_rekomendasi,
           alamat_pemberi_rekomendasi,
           no_telp_pemberi_rekomendasi,
+          dana_yang_disetujui: dana_yang_disetujui ? Number(dana_yang_disetujui) : undefined,
         },
       });
 
