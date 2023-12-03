@@ -288,7 +288,11 @@ module.exports = {
               id: Number(proposal_id),
             },
           },
-          user_id: userId,
+          user: {
+            connect: {
+              user_id: Number(userId),
+            },
+          },
           status,
         },
       });
