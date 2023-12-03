@@ -35,7 +35,7 @@ module.exports = {
             [sortBy]: sortType,
           },
           where: params,
-          include: {            
+          include: {
             program_category: true,
             program_institusi: {
               select: {
@@ -106,11 +106,11 @@ module.exports = {
       const [program, totalDonation] = await prisma.$transaction([
         prisma.program.findUnique({
           where: {
-            program_id: parseInt(id), 
+            program_id: parseInt(id),
           },
           include: {
             program_banner: true,
-            program_institusi: true,            
+            program_institusi: true,
             transactions: {
               select: {
                 amount: true,
@@ -175,7 +175,7 @@ module.exports = {
         }),
       });
 
-      const program_institusi_id = 1
+      const program_institusi_id = 1;
 
       //BODY
       const body = await schema.safeParseAsync({
@@ -186,10 +186,10 @@ module.exports = {
         program_end_date: new Date(req.body.program_end_date),
         program_start_date: new Date(req.body.program_start_date),
         program_target_amount: Number(req.body.program_target_amount),
-        program_institusi_id: program_institusi_id
+        program_institusi_id: program_institusi_id,
       });
 
-      const program_cat_id = Number(req.body.program_category_id)
+      const program_cat_id = Number(req.body.program_category_id);
 
       let errorObj = {};
 
@@ -225,12 +225,13 @@ module.exports = {
         });
       }
 
-      const { 
-        //program_institusi_id, 
-        ...rest } = body.data;
+      const {
+        //program_institusi_id,
+        ...rest
+      } = body.data;
 
       const userId = req.user_id;
-      console.log(body)
+      console.log(body);
       const program = await prisma.program.create({
         data: {
           ...rest,
@@ -244,7 +245,7 @@ module.exports = {
               user_id: Number(userId),
             },
           },
-         
+
           program_banner: {
             create: {
               banners_name: rest.program_title,
@@ -254,12 +255,12 @@ module.exports = {
           program_kode: nanoid(),
           ...(program_institusi_id
             ? {
-              program_institusi: {
-                connect: {
-                  institusi_id: program_institusi_id,
+                program_institusi: {
+                  connect: {
+                    institusi_id: program_institusi_id,
+                  },
                 },
-              },
-            }
+              }
             : {}),
         },
       });
@@ -270,7 +271,6 @@ module.exports = {
         });
       }
 
-    
       res.status(200).json({
         message: "Sukses Tambah Program",
         data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
@@ -309,7 +309,7 @@ module.exports = {
         program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
 
-      const program_cat_id = Number(req.body.program_category_id)
+      const program_cat_id = Number(req.body.program_category_id);
 
       let errorObj = {};
 
@@ -348,7 +348,7 @@ module.exports = {
       const { program_institusi_id, ...rest } = body.data;
 
       const userId = req.user_id;
-      console.log(body)
+      console.log(body);
       const program = await prisma.program.create({
         data: {
           ...rest,
@@ -378,12 +378,12 @@ module.exports = {
           program_kode: nanoid(),
           ...(program_institusi_id
             ? {
-              program_institusi: {
-                connect: {
-                  institusi_id: program_institusi_id,
+                program_institusi: {
+                  connect: {
+                    institusi_id: program_institusi_id,
+                  },
                 },
-              },
-            }
+              }
             : {}),
         },
       });
