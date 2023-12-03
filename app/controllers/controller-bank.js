@@ -8,7 +8,7 @@ const mt940js = require('mt940js');
 //const parser = require('swiftmessageparser');
 const parser  = new mt940js.Parser();
 const fs = require('fs');
-
+const { z } = require("zod");
 
 // pool.on('error',(err)=> {
 //     console.error(err);
@@ -170,7 +170,7 @@ module.exports ={
       try {
         //const userId = req.user_id;
   
-        const bank = await prisma.bank.findMany({
+        const bank = await prisma.bank_account.findMany({
           
         });
   
@@ -189,6 +189,63 @@ module.exports ={
       } catch (error) {
         return res.status(500).json({
           message: error?.message,
+        });
+      }
+    },
+
+    async statementCreate(req, res) {
+      try {
+        
+        const schema = z.object({          
+          no_rekening: z.string({ required_error: "No Rekening Harus Diis" }).min(5),
+          bank: z.number().optional()
+        });
+
+        const file = req.file;
+        if (!file) {
+          return res.status(400).json({
+            message: "File MT940 Tidak Boleh Kosong",
+          });
+        }
+
+        const maxSize = 5000000;
+        if (file.size > maxSize) {
+          await fs.unlink(file.path);
+
+          return res.status(400).json({
+            message: "Ukuran File terlalu Besar",
+          });
+        }
+        
+                          
+        const {
+          filename,
+          path,          
+          bank,
+          no_rekening          
+        } = req.body;
+  
+        //console.log(JSON.stringify(req.body))
+          
+        const glResult = await prisma.mt_file.create({
+          data: {
+            filename : `${file.filename}`,
+            path: `uploads/${file.filename}`,          
+            bank,
+            no_rekening,
+            user_id: userId
+          },
+        });
+  
+        return res.status(200).json({
+          message: "Sukses",
+          data: glResult,
+        });
+      } catch (error) {
+            
+        return res.status(500).json({
+          message: "Internal Server Error",
+          error: error.message,
         });
       }
     },

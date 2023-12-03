@@ -92,6 +92,7 @@ model user {
   mustahiq_id           Int?                    @unique
   beneficiary           beneficiary[]
   document_type         document_type[]
+  ebs_validation        ebs_validation[]
   institusi             institusi[]
   notifications         notification[]
   pettycash             pettycash[]
@@ -214,25 +215,26 @@ model bank_account {
 }
 
 model ebs_staging {
-  id             Int     @id @default(autoincrement())
-  account_number String? @db.VarChar(50)
-  trans_ref      String? @db.VarChar(50)
-  bank_date      String? @db.VarChar(50)
-  state_num      String? @db.VarChar(25)
-  currency       String? @db.VarChar(3)
-  ob_amount      String? @db.VarChar(200)
-  ob_ind         String? @db.VarChar(50)
-  eb_amount      String? @db.VarChar(200)
-  eb_ind         String? @db.VarChar(50)
-  trans_date     String? @db.VarChar(50)
-  trans_type     String? @db.VarChar(27)
-  trans_amount   String? @db.VarChar(27)
-  trans_id       String? @db.VarChar(27)
-  text_info      String? @db.VarChar(200)
-  ebs_info1      String? @db.VarChar(50)
-  ebs_info2      String? @db.VarChar(50)
-  ebs_info3      String? @db.VarChar(50)
-  ebs_filename   String? @db.VarChar(255)
+  id             Int              @id @default(autoincrement())
+  account_number String?          @db.VarChar(50)
+  trans_ref      String?          @db.VarChar(50)
+  bank_date      String?          @db.VarChar(50)
+  state_num      String?          @db.VarChar(25)
+  currency       String?          @db.VarChar(3)
+  ob_amount      String?          @db.VarChar(200)
+  ob_ind         String?          @db.VarChar(50)
+  eb_amount      String?          @db.VarChar(200)
+  eb_ind         String?          @db.VarChar(50)
+  trans_date     String?          @db.VarChar(50)
+  trans_type     String?          @db.VarChar(27)
+  trans_amount   String?          @db.VarChar(27)
+  trans_id       String?          @db.VarChar(27)
+  text_info      String?          @db.VarChar(200)
+  ebs_info1      String?          @db.VarChar(50)
+  ebs_info2      String?          @db.VarChar(50)
+  ebs_info3      String?          @db.VarChar(50)
+  ebs_filename   String?          @db.VarChar(255)
+  ebs_validation ebs_validation[]
 
   @@index([account_number], map: "ebs_staging_account_number_fkey")
 }
@@ -311,6 +313,7 @@ model gl_account {
   description      String?
   coa              String?
   status           String?
+  ebs_validation   ebs_validation[]
   gl_account_type  gl_account_type?   @relation(fields: [gl_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_type_FK")
   program_category program_category[]
 
@@ -441,6 +444,18 @@ model proposal {
   @@index([program_id], map: "proposal_FK_1")
 }
 
+model mt_file {
+  id           Int           @id
+  filename     String?       @db.VarChar(255)
+  path         String?       @db.Text
+  date         DateTime?     @default(now()) @db.Timestamp(0)
+  bank         Int?
+  no_rekening  String?       @db.VarChar(25)
+  bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
+
+  @@index([bank], map: "mt_file_FK")
+}
+
 model proposal_approval {
   id          Int       @id @default(autoincrement())
   proposal_id Int?
@@ -453,15 +468,17 @@ model proposal_approval {
   @@index([proposal_id], map: "proposal_approval_FK")
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model mt_file {
-  id           Int           @id
-  filename     String?       @db.VarChar(255)
-  path         String?       @db.Text
-  date         DateTime?     @default(now()) @db.Timestamp(0)
-  bank         Int?
-  bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
+model ebs_validation {
+  id             Int          @id @default(autoincrement())
+  ebs_id         Int?
+  gl_id          Int?
+  user_id        Int?
+  tgl_validation DateTime?    @default(now()) @db.Timestamp(0)
+  gl_account     gl_account?  @relation(fields: [gl_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ebs_validation_FK")
+  user           user?        @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "ebs_validation_FK_1")
+  ebs_staging    ebs_staging? @relation(fields: [ebs_id], references: [id], onUpdate: SetNull, map: "ebs_validation_FK_2")
 
-  @@index([bank], map: "mt_file_FK")
-  @@ignore
+  @@index([gl_id], map: "ebs_validation_FK")
+  @@index([user_id], map: "ebs_validation_FK_1")
+  @@index([ebs_id], map: "ebs_validation_FK_2")
 }
