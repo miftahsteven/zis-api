@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const { bank } = require('../controllers');
+const path = require("path");
 const multer  = require('multer')
-//const upload = multer({ dest: './uploads/mt940/' })
-const { upload } = require("../helper/upload");
+const dest = path.resolve(__dirname, "../../uploads/");
+const upload = multer({ dest: dest })
+//const { upload } = require("../helper/upload");
 const { authentication, authorization } = require("../../config/auth");
 const fs = require("fs/promises");
 

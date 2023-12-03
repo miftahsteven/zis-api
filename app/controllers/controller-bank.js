@@ -201,7 +201,8 @@ module.exports ={
           bank: z.number().optional()
         });
 
-        const file = req.file;
+        const file = req.files?.statement?.[0].path;
+        console.log(JSON.stringify(file));
         if (!file) {
           return res.status(400).json({
             message: "File MT940 Tidak Boleh Kosong",
