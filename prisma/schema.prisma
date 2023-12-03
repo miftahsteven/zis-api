@@ -451,6 +451,7 @@ model mt_file {
   date         DateTime?     @default(now()) @db.Timestamp(0)
   bank         Int?
   no_rekening  String?       @db.VarChar(25)
+  user_id      Int?
   bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
 
   @@index([bank], map: "mt_file_FK")
