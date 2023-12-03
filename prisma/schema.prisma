@@ -98,6 +98,7 @@ model user {
   pettycash             pettycash[]
   pettycash_request     pettycash_request[]
   proposal              proposal[]
+  proposal_approval     proposal_approval[]
   recurring_transaction recurring_transaction[]
   transactions          transactions[]
   mustahiq              mustahiq?               @relation(fields: [mustahiq_id], references: [id], onUpdate: NoAction)
@@ -318,6 +319,7 @@ model gl_account {
   status           String?
   ebs_validation   ebs_validation[]
   gl_account_type  gl_account_type?   @relation(fields: [gl_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_type_FK")
+  jurnal           jurnal[]
   program_category program_category[]
 
   @@index([gl_type], map: "gl_account_type_FK")
@@ -346,6 +348,7 @@ model pettycash_request {
   request_date DateTime? @default(now()) @db.Timestamp(0)
   status       Int?      @default(0) @db.SmallInt
   deskripsi    String?   @db.Text
+  jurnal       jurnal[]
   user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_request_FK")
 
   @@index([user_id], map: "pettycash_request_FK")
@@ -440,6 +443,7 @@ model proposal {
   user_approver_id2           Int?
   status_all                  Int?                @default(0) @db.SmallInt
   dana_yang_disetujui         Int?
+  jurnal                      jurnal[]
   user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
   program                     program?            @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
   proposal_approval           proposal_approval[]
@@ -470,8 +474,10 @@ model proposal_approval {
   status      Int?      @default(0) @db.SmallInt
   flag        Int?      @default(0) @db.SmallInt
   proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
+  user        user?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([proposal_id], map: "proposal_approval_FK")
+  @@index([user_id], map: "proposal_approval_user_id_fkey")
 }
 
 model ebs_validation {
@@ -487,4 +493,33 @@ model ebs_validation {
   @@index([gl_id], map: "ebs_validation_FK")
   @@index([user_id], map: "ebs_validation_FK_1")
   @@index([ebs_id], map: "ebs_validation_FK_2")
+}
+
+model jurnal {
+  id                        Int                @id @default(autoincrement())
+  datetime                  DateTime?          @default(now()) @db.Timestamp(0)
+  glaccount                 Int?
+  jurnal_category_id        Int?
+  deskripsi                 String?            @db.Text
+  iscredit                  Int?               @default(0) @db.SmallInt
+  isdebit                   Int?               @default(0) @db.SmallInt
+  transaction_proposal_id   Int?
+  transaction_petty_cash_id Int?
+  transaction_muzaki_id     Int?
+  transaction_mustahiq_id   Int?
+  gl_account                gl_account?        @relation(fields: [glaccount], references: [id], onUpdate: SetNull, map: "jurnal_FK")
+  proposal                  proposal?          @relation(fields: [transaction_proposal_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_1")
+  pettycash_request         pettycash_request? @relation(fields: [transaction_petty_cash_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_2")
+  jurnal_category           jurnal_category?   @relation(fields: [jurnal_category_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_3")
+
+  @@index([glaccount], map: "jurnal_FK")
+  @@index([transaction_proposal_id], map: "jurnal_FK_1")
+  @@index([transaction_petty_cash_id], map: "jurnal_FK_2")
+  @@index([jurnal_category_id], map: "jurnal_FK_3")
+}
+
+model jurnal_category {
+  id       Int      @id @default(autoincrement())
+  category String?  @db.Text
+  jurnal   jurnal[]
 }
