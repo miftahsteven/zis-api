@@ -102,7 +102,6 @@ model user {
   transactions          transactions[]
   mustahiq              mustahiq?               @relation(fields: [mustahiq_id], references: [id], onUpdate: NoAction)
   type                  UserType?               @relation(fields: [user_type], references: [user_type_id], onUpdate: NoAction)
-  proposal_approval     proposal_approval[]
 
   @@index([user_type], map: "user_user_type_fkey")
 }
@@ -235,9 +234,12 @@ model ebs_staging {
   ebs_info2      String?          @db.VarChar(50)
   ebs_info3      String?          @db.VarChar(50)
   ebs_filename   String?          @db.VarChar(255)
+  mt_file_id     Int?
+  mt_file        mt_file?         @relation(fields: [mt_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ebs_staging_FK")
   ebs_validation ebs_validation[]
 
   @@index([account_number], map: "ebs_staging_account_number_fkey")
+  @@index([mt_file_id], map: "ebs_staging_FK")
 }
 
 model tccode {
@@ -437,6 +439,7 @@ model proposal {
   dana_yang_diajukan          Int?                @default(0)
   user_approver_id2           Int?
   status_all                  Int?                @default(0) @db.SmallInt
+  dana_yang_disetujui         Int?
   user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
   program                     program?            @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_1")
   proposal_approval           proposal_approval[]
@@ -446,13 +449,14 @@ model proposal {
 }
 
 model mt_file {
-  id           Int           @id
+  id           Int           @id @default(autoincrement())
   filename     String?       @db.VarChar(255)
   path         String?       @db.Text
   date         DateTime?     @default(now()) @db.Timestamp(0)
   bank         Int?
   no_rekening  String?       @db.VarChar(25)
   user_id      Int?
+  ebs_staging  ebs_staging[]
   bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
 
   @@index([bank], map: "mt_file_FK")
@@ -465,9 +469,7 @@ model proposal_approval {
   date        DateTime? @default(now()) @db.Timestamp(0)
   status      Int?      @default(0) @db.SmallInt
   flag        Int?      @default(0) @db.SmallInt
-  user        user?     @relation(fields: [user_id], references: [user_id])
-
-  proposal proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
+  proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
 
   @@index([proposal_id], map: "proposal_approval_FK")
 }

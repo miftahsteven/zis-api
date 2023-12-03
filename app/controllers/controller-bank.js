@@ -21,7 +21,12 @@ module.exports ={
 
     async getDataMt940(req,res){
             
-        const statements = parser.parse(fs.readFileSync('uploads/mt940/MT940_Siswaf.txt', 'utf8'));
+        const {
+          id, filename
+        } = req.body
+
+
+        const statements = parser.parse(fs.readFileSync('uploads/'+filename, 'utf8'));
 
         let dataTrans = [];
 
@@ -46,7 +51,8 @@ module.exports ={
                   trans_amount: (t.amount).toString(),
                   trans_id: Number(t.amount) < 0 ? "D":"C",
                   text_info: (t.details).toString(),
-                  ebs_filename: "MT940_Siswaf.txt"
+                  ebs_filename: filename,
+                  mt_file_id: Number(id)
             })
 
             console.log(JSON.stringify(dataTrans))
@@ -104,6 +110,7 @@ module.exports ={
     },
 
     async dataMt940(req, res) {
+      const id = req.params.id
       try {
         const page = Number(req.query.page || 1);
         const perPage = Number(req.query.perPage || 10);
@@ -115,7 +122,8 @@ module.exports ={
         const sortBy = req.query.sortBy || "id";
         const sortType = req.query.order || "asc";
   
-        const params = {                    
+        const params = {      
+          mt_file_id: Number(id),
           text_info: {
             contains: keyword,
           },            
@@ -166,6 +174,81 @@ module.exports ={
       }
     },
 
+    async dataFileMt940(req, res) {
+      try {
+        const page = Number(req.query.page || 1);
+        const perPage = Number(req.query.perPage || 10);
+        const status = Number(req.query.status || 4);
+        const skip = (page - 1) * perPage;
+        const keyword = req.query.keyword || "";
+        const user_type = req.query.user_type || "";
+        const category = req.query.category || "";
+        const sortBy = req.query.sortBy || "id";
+        const sortType = req.query.order || "asc";
+  
+        const params = {          
+           OR : [
+            { bank_account: {
+              bank_name: {
+                  contains: keyword
+              }
+            }},     
+            {
+              filename:{
+                contains: keyword
+              }
+            }
+          ]
+        };
+  
+        const [count, mt] = await prisma.$transaction([
+          prisma.mt_file.count({
+            where: params,
+          }),
+          prisma.mt_file.findMany({              
+            orderBy: {
+              [sortBy]: sortType,
+            },
+            include: {
+              bank_account: true
+            },
+            where: params,         
+            skip,
+            take: perPage,
+          }),
+        ]);
+  
+        const mtResult = await Promise.all(
+          mt.map(async (item) => {
+            
+  
+            return {
+              ...item
+              //program_target_amount: Number(item.program_target_amount),
+              //total_donation: total_donation._sum.amount || 0,
+            };
+          })
+        );
+  
+        res.status(200).json({
+          // aggregate,
+          message: "Sukses Ambil Data",
+  
+          data: mtResult,
+          pagination: {
+            total: count,
+            page,
+            hasNext: count > page * perPage,
+            totalPage: Math.ceil(count / perPage),
+          },
+        });
+      } catch (error) {
+        res.status(500).json({
+          message: error?.message,
+        });
+      }
+    },
+
     async listbank(req, res) {
       try {
         //const userId = req.user_id;
@@ -194,15 +277,15 @@ module.exports ={
     },
 
     async statementCreate(req, res) {
-      try {
-        
+      try {        
+
+        const userId = req.user_id;
+
         const schema = z.object({          
           no_rekening: z.string({ required_error: "No Rekening Harus Diis" }).min(5),
           bank: z.number().optional()
         });
-
-        const file = req.files?.statement?.[0].path;
-        console.log(JSON.stringify(file));
+        const file = req.file;      
         if (!file) {
           return res.status(400).json({
             message: "File MT940 Tidak Boleh Kosong",
@@ -232,7 +315,7 @@ module.exports ={
           data: {
             filename : `${file.filename}`,
             path: `uploads/${file.filename}`,          
-            bank,
+            bank: Number(bank),
             no_rekening,
             user_id: userId
           },
