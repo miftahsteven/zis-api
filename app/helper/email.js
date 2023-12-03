@@ -8,11 +8,6 @@ const sendEmail = async ({ email, html, subject }) => {
       pass: "ziswaf2019",
     },
   });
-  // user: admin@zisindosat.id
-  // pass: Ziswaf_2019
-  // Incoming server (IMAP) | imap.hostinger.com | 993
-  // Outgoing server (SMTP) | smtp.hostinger.com | 465
-  // Incoming server (POP) | pop.hostinger.com | 995
 
   const info = await transporter.sendMail({
     from: "admin@zisindosat.id",
