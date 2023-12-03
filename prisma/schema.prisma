@@ -507,6 +507,7 @@ model jurnal {
   transaction_petty_cash_id Int?
   transaction_muzaki_id     Int?
   transaction_mustahiq_id   Int?
+  amount                    Int?
   gl_account                gl_account?        @relation(fields: [glaccount], references: [id], onUpdate: SetNull, map: "jurnal_FK")
   proposal                  proposal?          @relation(fields: [transaction_proposal_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_1")
   pettycash_request         pettycash_request? @relation(fields: [transaction_petty_cash_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_2")
