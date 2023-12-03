@@ -40,7 +40,15 @@ module.exports = {
             // jurnal_category: true,
             // proposal: true,
             // petty_cash: true
-            proposal: true,
+            proposal: {
+              include: {
+                user: {
+                  include: {
+                    mustahiq: true,
+                  },
+                },
+              },
+            },
             gl_account: true,
             jurnal_category: true,
             pettycash_request: true,
