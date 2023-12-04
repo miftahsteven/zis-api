@@ -295,9 +295,11 @@ module.exports = {
           required_error: "Target Dana Harus Diisi",
           invalid_type_error: "Target Dana Harus Diisi",
         }),
+        program_banner: z
+          .any().optional(),
       });
-
-      //BODY
+  
+      // BODY
       const body = await schema.safeParseAsync({
         // ...req.body,
         program_title: req.body.program_title,
@@ -308,96 +310,94 @@ module.exports = {
         program_target_amount: Number(req.body.program_target_amount),
         program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
-
+  
       const program_cat_id = Number(req.body.program_category_id);
-
+  
       let errorObj = {};
-
+  
       if (body.error) {
         body.error.issues.forEach((issue) => {
           errorObj[issue.path[0]] = issue.message;
         });
         body.error = errorObj;
       }
-
+  
       if (!body.success) {
         return res.status(400).json({
           message: "Beberapa Field Harus Diisi",
           error: errorObj,
         });
       }
-
-      //FILE
+  
+      // FILE
       const file = req.file;
-
-      if (!file) {
-        return res.status(400).json({
-          message: "Banner harus diupload",
-        });
-      }
-
-      const maxSize = 5000000;
-      if (file.size > maxSize) {
-        await fs.unlink(file.path);
-
-        return res.status(400).json({
-          message: "Ukuran Banner Terlalu Besar",
-        });
-      }
-
-      const { program_institusi_id, ...rest } = body.data;
-
+      const program_id = req.params.id;
       const userId = req.user_id;
-      const program_id = req.params.id
-      console.log(body);
+  
+      const { program_institusi_id, ...rest } = body.data;
+  
+      let programUpdateData = {
+        ...rest,
+        program_category: {
+          connect: {
+            id: Number(program_cat_id),
+          },
+        },
+        // user: {
+        //   connect: {
+        user_id: Number(userId),
+        //   },
+        // },
+        // beneficiary: {
+        //   connectOrCreate: {
+        //     create: {
+  
+        //     },
+        //   }
+        // },
+        program_kode: nanoid(),
+        ...(program_institusi_id
+          ? {
+            program_institusi: {
+              connect: {
+                institusi_id: program_institusi_id,
+              },
+            },
+          }
+          : {}),
+      };
+  
+      // Update program_banner if file is provided
+      if (file) {
+        const maxSize = 5000000;
+        if (file.size > maxSize) {
+          await fs.unlink(file.path);
+          return res.status(400).json({
+            message: "Ukuran Banner Terlalu Besar",
+          });
+        }
+  
+        programUpdateData.program_banner = {
+          create: {
+            banners_name: rest.program_title,
+            banners_path: `uploads/${file.filename}`,
+          },
+        };
+      }
+  
       const program = await prisma.program.update({
         where: {
-          program_id: Number(program_id)
+          program_id: Number(program_id),
         },
-        data: {
-          ...rest,
-          program_category: {
-            connect: {
-              id: Number(program_cat_id),
-            },
-          },
-          // user: {
-          //   connect: {
-          user_id: Number(userId),
-          //   },
-          // },
-          // beneficiary: {
-          //   connectOrCreate: {
-          //     create: {
-
-          //     },
-          //   }
-          // },
-          program_banner: {
-            create: {
-              banners_name: rest.program_title,
-              banners_path: `uploads/${file.filename}`,
-            },
-          },
-          program_kode: nanoid(),
-          ...(program_institusi_id
-            ? {
-              program_institusi: {
-                connect: {
-                  institusi_id: program_institusi_id,
-                },
-              },
-            }
-            : {}),
-        },
+        data: programUpdateData,
       });
-
+  
       if (!program) {
         return res.status(400).json({
           message: "Gagal Tambah Program",
         });
       }
-
+  
       await prisma.notification.create({
         data: {
           user: {
@@ -415,7 +415,7 @@ module.exports = {
           },
         },
       });
-
+  
       res.status(200).json({
         message: "Sukses Edit Program",
         data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
@@ -426,6 +426,7 @@ module.exports = {
       });
     }
   },
+  
 
   async getBanner(req, res) {
     try {
