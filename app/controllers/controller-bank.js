@@ -28,14 +28,16 @@ module.exports ={
 
         const statements = parser.parse(fs.readFileSync('uploads/'+filename, 'utf8'));
 
-        let dataTrans = [];
+        let dataTrans = [];              
 
         for (let s of statements) {
             //console.log(s.number.statement, s.statementDate, parseInt((s.accountIdentification).replace(/\s/g, '')), s.closingBalance);
             
             for (let t of s.transactions) {
             //console.log(t.date, "DETAIL : ", t.amount, "Ref", t.details, "TYPE: ", t.transactionType, "FUNDSCODE: ", t.fundsCode);
-                      
+                 
+             
+
             dataTrans.push({
                   account_number: (s.accountIdentification).replace(/\s/g, ''),
                   trans_ref: s.transactionReference,

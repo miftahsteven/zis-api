@@ -22,6 +22,8 @@ const mustahiqRoute = require("./app/routes/route-mustahiq");
 const bankRoute = require("./app/routes/route-bank");
 const proposalRoute = require("./app/routes/route-proposal");
 const jurnal = require("./app/routes/route-jurnal");
+const ptcash = require("./app/routes/route-pettycash");
+const budget = require("./app/routes/route-budget");
 const refRoute = require("./app/routes/route-reference");
 const transactionRoute = require("./app/routes/transaction");
 
@@ -45,6 +47,8 @@ app.use("/bank", bankRoute);
 app.use("/ref", refRoute);
 app.use("/proposal", proposalRoute);
 app.use("/jurnal", jurnal);
+app.use("/ptcash", ptcash);
+app.use("/budget", budget);
 app.use("/transaction", transactionRoute);
 
 //ERP

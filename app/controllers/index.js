@@ -3,6 +3,8 @@ const home = require("./controller-home");
 const bank = require("./controller-bank");
 const proposal = require("./controller-proposal");
 const jurnal = require("./controller-jurnal");
+const pettyCash = require("./controller-pettycash");
+const budget = require("./controller-budget");
 const refData = require("./controller-reference");
 const usererp = require("./controller-user-erp");
 const programerp = require("./controller-program-erp");
@@ -15,5 +17,7 @@ module.exports = {
   programerp,
   refData,
   proposal,
-  jurnal
+  jurnal,
+  pettyCash,
+  budget
 };

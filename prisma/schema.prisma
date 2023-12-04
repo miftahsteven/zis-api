@@ -53,6 +53,7 @@ model program {
   user_id               Int
   program_category_id   Int?
   beneficiary_id        Int?
+  budget                budget[]
   notification          notification[]
   beneficiary           beneficiary?            @relation(fields: [beneficiary_id], references: [id])
   program_banner        banners                 @relation(fields: [program_banner_id], references: [banners_id])
@@ -219,14 +220,14 @@ model ebs_staging {
   id             Int              @id @default(autoincrement())
   account_number String?          @db.VarChar(50)
   trans_ref      String?          @db.VarChar(50)
-  bank_date      String?          @db.VarChar(50)
+  bank_date      String?          @db.VarChar(100)
   state_num      String?          @db.VarChar(25)
   currency       String?          @db.VarChar(3)
   ob_amount      String?          @db.VarChar(200)
   ob_ind         String?          @db.VarChar(50)
   eb_amount      String?          @db.VarChar(200)
   eb_ind         String?          @db.VarChar(50)
-  trans_date     String?          @db.VarChar(50)
+  trans_date     String?          @db.VarChar(100)
   trans_type     String?          @db.VarChar(27)
   trans_amount   String?          @db.VarChar(27)
   trans_id       String?          @db.VarChar(27)
@@ -336,6 +337,7 @@ model pettycash {
   amount     Int?      @default(0)
   updatetime DateTime? @db.DateTime(0)
   user_id    Int
+  evidence   String?   @db.Text
   user       user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_FK")
 
   @@index([user_id], map: "pettycash_FK")
@@ -348,6 +350,7 @@ model pettycash_request {
   request_date DateTime? @default(now()) @db.Timestamp(0)
   status       Int?      @default(0) @db.SmallInt
   deskripsi    String?   @db.Text
+  evidence     String?   @db.Text
   jurnal       jurnal[]
   user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_request_FK")
 
@@ -461,7 +464,7 @@ model mt_file {
   no_rekening  String?       @db.VarChar(25)
   user_id      Int?
   ebs_staging  ebs_staging[]
-  bank_account bank_account? @relation(fields: [bank], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mt_file_FK")
+  bank_account bank_account? @relation(fields: [bank], references: [id], onUpdate: SetNull, map: "mt_file_FK")
 
   @@index([bank], map: "mt_file_FK")
 }
@@ -524,4 +527,16 @@ model jurnal_category {
   id       Int      @id @default(autoincrement())
   category String?  @db.Text
   jurnal   jurnal[]
+}
+
+model budget {
+  id            Int       @id @default(autoincrement())
+  program_id    Int?
+  amount        Int?
+  datetime      DateTime? @default(now()) @db.Timestamp(0)
+  tahun         String?   @db.VarChar(5)
+  tahun_laporan String?   @db.VarChar(5)
+  program       program?  @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "budget_FK")
+
+  @@index([program_id], map: "budget_FK")
 }
