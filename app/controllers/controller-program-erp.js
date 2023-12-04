@@ -240,11 +240,11 @@ module.exports = {
               id: Number(program_cat_id),
             },
           },
-          user: {
-            connect: {
-              user_id: Number(userId),
-            },
-          },
+          // user: {
+          //   connect: {
+          user_id: Number(userId),
+          //   },
+          // },
 
           program_banner: {
             create: {
@@ -255,12 +255,12 @@ module.exports = {
           program_kode: nanoid(),
           ...(program_institusi_id
             ? {
-                program_institusi: {
-                  connect: {
-                    institusi_id: program_institusi_id,
-                  },
+              program_institusi: {
+                connect: {
+                  institusi_id: program_institusi_id,
                 },
-              }
+              },
+            }
             : {}),
         },
       });
@@ -348,8 +348,12 @@ module.exports = {
       const { program_institusi_id, ...rest } = body.data;
 
       const userId = req.user_id;
+      const program_id = req.params.id
       console.log(body);
-      const program = await prisma.program.create({
+      const program = await prisma.program.update({
+        where: {
+          program_id: Number(program_id)
+        },
         data: {
           ...rest,
           program_category: {
@@ -357,11 +361,11 @@ module.exports = {
               id: Number(program_cat_id),
             },
           },
-          user: {
-            connect: {
-              user_id: Number(userId),
-            },
-          },
+          // user: {
+          //   connect: {
+          user_id: Number(userId),
+          //   },
+          // },
           // beneficiary: {
           //   connectOrCreate: {
           //     create: {
@@ -378,12 +382,12 @@ module.exports = {
           program_kode: nanoid(),
           ...(program_institusi_id
             ? {
-                program_institusi: {
-                  connect: {
-                    institusi_id: program_institusi_id,
-                  },
+              program_institusi: {
+                connect: {
+                  institusi_id: program_institusi_id,
                 },
-              }
+              },
+            }
             : {}),
         },
       });
@@ -401,7 +405,7 @@ module.exports = {
               user_id: Number(userId),
             },
           },
-          description: "Program Anda Telah Berhasil Dibuat, Silahkan Tunggu Konfirmasi Dari Admin",
+          description: "Program Anda Telah Berhasil Diedit, Silahkan Tunggu Konfirmasi Dari Admin",
           title: "Program Baru",
           type: "program",
           program: {
@@ -413,7 +417,7 @@ module.exports = {
       });
 
       res.status(200).json({
-        message: "Sukses Tambah Program",
+        message: "Sukses Edit Program",
         data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
       });
     } catch (error) {
