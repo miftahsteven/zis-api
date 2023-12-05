@@ -193,6 +193,7 @@ module.exports = {
         no_telp_pemberi_rekomendasi,
         dana_yang_diajukan,
         dana_yang_disetujui,
+        dana_approval,
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
@@ -260,6 +261,7 @@ module.exports = {
           alamat_pemberi_rekomendasi,
           no_telp_pemberi_rekomendasi,
           dana_yang_disetujui: dana_yang_disetujui ? Number(dana_yang_disetujui) : undefined,
+          dana_approval: dana_approval ? Number(dana_approval) : undefined,
         },
       });
 
@@ -279,7 +281,7 @@ module.exports = {
     try {
       const userId = req.user_id;
 
-      const { proposal_id, status } = req.body;
+      const { proposal_id, status, amount } = req.body;
 
       //console.log(JSON.stringify(req.body))
 
@@ -296,6 +298,7 @@ module.exports = {
             },
           },
           status,
+          amount: Number(amount),
         },
       });
 
