@@ -47,7 +47,7 @@ model program {
   program_institusi_id  Int?
   program_target_amount BigInt
   program_create        DateTime?               @default(now()) @db.Timestamp(0)
-  program_status        Int?                    @default(1) @db.SmallInt
+  program_status        Int?                    @default(0) @db.SmallInt
   program_isheadline    Int?                    @default(0) @db.SmallInt
   program_banner_id     Int                     @unique
   user_id               Int
@@ -91,6 +91,7 @@ model user {
   user_token            String?                 @db.Text
   user_reg_date         DateTime                @default(now()) @db.Timestamp(0)
   mustahiq_id           Int?                    @unique
+  article               article[]
   beneficiary           beneficiary[]
   document_type         document_type[]
   ebs_validation        ebs_validation[]
@@ -310,18 +311,19 @@ model document_type {
 }
 
 model gl_account {
-  id               Int                @id @default(autoincrement())
-  gl_account       String?
-  gl_name          String?
-  gl_type          Int?
-  gl_group         String?
-  description      String?
-  coa              String?
-  status           String?
-  ebs_validation   ebs_validation[]
-  gl_account_type  gl_account_type?   @relation(fields: [gl_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_type_FK")
-  jurnal           jurnal[]
-  program_category program_category[]
+  id                Int                 @id @default(autoincrement())
+  gl_account        String?
+  gl_name           String?
+  gl_type           Int?
+  gl_group          String?
+  description       String?
+  coa               String?
+  status            String?
+  ebs_validation    ebs_validation[]
+  gl_account_type   gl_account_type?    @relation(fields: [gl_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_type_FK")
+  jurnal            jurnal[]
+  jurnal_petty_cash jurnal_petty_cash[]
+  program_category  program_category[]
 
   @@index([gl_type], map: "gl_account_type_FK")
 }
@@ -344,15 +346,16 @@ model pettycash {
 }
 
 model pettycash_request {
-  id           Int       @id @default(autoincrement())
-  amount       Int?      @default(0)
-  user_id      Int
-  request_date DateTime? @default(now()) @db.Timestamp(0)
-  status       Int?      @default(0) @db.SmallInt
-  deskripsi    String?   @db.Text
-  evidence     String?   @db.Text
-  jurnal       jurnal[]
-  user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_request_FK")
+  id                Int                 @id @default(autoincrement())
+  amount            Int?                @default(0)
+  user_id           Int
+  request_date      DateTime?           @default(now()) @db.Timestamp(0)
+  status            Int?                @default(0) @db.SmallInt
+  deskripsi         String?             @db.Text
+  evidence          String?             @db.Text
+  jurnal            jurnal[]
+  jurnal_petty_cash jurnal_petty_cash[]
+  user              user                @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "pettycash_request_FK")
 
   @@index([user_id], map: "pettycash_request_FK")
 }
@@ -476,6 +479,7 @@ model proposal_approval {
   date        DateTime? @default(now()) @db.Timestamp(0)
   status      Int?      @default(0) @db.SmallInt
   flag        Int?      @default(0) @db.SmallInt
+  amount      Int?
   proposal    proposal? @relation(fields: [proposal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_approval_FK")
   user        user?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
@@ -524,9 +528,10 @@ model jurnal {
 }
 
 model jurnal_category {
-  id       Int      @id @default(autoincrement())
-  category String?  @db.Text
-  jurnal   jurnal[]
+  id                Int                 @id @default(autoincrement())
+  category          String?             @db.Text
+  jurnal            jurnal[]
+  jurnal_petty_cash jurnal_petty_cash[]
 }
 
 model budget {
@@ -534,9 +539,42 @@ model budget {
   program_id    Int?
   amount        Int?
   datetime      DateTime? @default(now()) @db.Timestamp(0)
+  bulan         Int?
   tahun         String?   @db.VarChar(5)
   tahun_laporan String?   @db.VarChar(5)
   program       program?  @relation(fields: [program_id], references: [program_id], onDelete: NoAction, onUpdate: NoAction, map: "budget_FK")
 
   @@index([program_id], map: "budget_FK")
+}
+
+model article {
+  id       Int       @id @default(autoincrement())
+  title    String?   @db.VarChar(255)
+  content  String?   @db.LongText
+  banner   String?   @db.Text
+  user_id  Int?
+  datetime DateTime? @default(now()) @db.Timestamp(0)
+  user     user?     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "article_FK")
+
+  @@index([user_id], map: "article_FK")
+}
+
+model jurnal_petty_cash {
+  id                        Int                @id @default(autoincrement())
+  datetime                  DateTime?          @default(now()) @db.Timestamp(0)
+  glaccount                 Int?
+  jurnal_category_id        Int?
+  deskripsi                 String?            @db.Text
+  iscredit                  Int?               @default(0) @db.SmallInt
+  isdebit                   Int?               @default(0) @db.SmallInt
+  transaction_petty_cash_id Int?
+  amount_credit             Int?
+  amount_debit              Int?
+  pettycash_request         pettycash_request? @relation(fields: [transaction_petty_cash_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_2_copy")
+  jurnal_category           jurnal_category?   @relation(fields: [jurnal_category_id], references: [id], onUpdate: SetNull, map: "jurnal_FK_3_copy")
+  gl_account                gl_account?        @relation(fields: [glaccount], references: [id], onUpdate: SetNull, map: "jurnal_FK_copy")
+
+  @@index([glaccount], map: "jurnal_FK")
+  @@index([transaction_petty_cash_id], map: "jurnal_FK_2")
+  @@index([jurnal_category_id], map: "jurnal_FK_3")
 }
