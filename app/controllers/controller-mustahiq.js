@@ -167,4 +167,65 @@ module.exports = {
       });
     }
   },
+  async getDetailById(req, res) {
+    try {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 1);
+      const skip = (page - 1) * perPage;
+      const keyword = req.query.keyword || "";
+      const sortBy = req.query.sortBy || "id";
+      const sortType = req.query.order || "asc";
+      const id = req.params.id
+      const params = {
+        id: Number(id)
+      };
+
+      const [count, proposal] = await prisma.$transaction([
+        prisma.proposal.count({
+          where: params,
+        }),
+        prisma.proposal.findMany({
+          orderBy: {
+            [sortBy]: sortType,
+          },
+          where: params,
+          include: {
+            user: true,
+            proposal_approval: {
+              include: {
+                user: {
+                  select: {
+                    user_id: true,
+                    user_nama: true,
+                    username: true,
+                    user_phone: true,
+                  },
+                },
+              },
+            },
+          },
+          skip,
+          take: perPage,
+        }),
+      ]);
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: proposal,
+        pagination: {
+          total: count,
+          page,
+          hasNext: count > page * perPage,
+          totalPage: Math.ceil(count / perPage),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 };

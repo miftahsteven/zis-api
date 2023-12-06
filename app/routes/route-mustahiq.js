@@ -6,6 +6,7 @@ const { validateFields } = require("../middleware/middleware-mustahiq");
 
 router.get("/", authentication, mustahiq.details); 
 router.get("/proposal/:id", authentication, mustahiq.getProposalById); 
+router.get("/details/:id", authentication, mustahiq.getDetailById);
 router.post(
   "/create",
   authentication,
