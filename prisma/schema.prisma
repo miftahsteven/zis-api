@@ -445,13 +445,11 @@ model proposal {
   tanggal_approval3           DateTime?           @db.DateTime(0)
   user_approver_id3           Int?
   status_bayar                Int?                @default(0) @db.SmallInt
-  approved                    Int?                @default(0) @db.SmallInt
   dana_yang_diajukan          Int?                @default(0)
   user_approver_id2           Int?
   status_all                  Int?                @default(0) @db.SmallInt
-  //Dana setelah disetujui semua & masuk jurnal & sudah bayar
   dana_yang_disetujui         Int?
-  //Dana yang disetujui dipilih dari approver, belum masuk jurnal & belum bayar
+  approved                    Int?                @default(0) @db.SmallInt
   dana_approval               Int?
   jurnal                      jurnal[]
   user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
