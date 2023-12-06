@@ -194,6 +194,7 @@ module.exports = {
         dana_yang_diajukan,
         dana_yang_disetujui,
         dana_approval,
+        approved,
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
@@ -262,6 +263,7 @@ module.exports = {
           no_telp_pemberi_rekomendasi,
           dana_yang_disetujui: dana_yang_disetujui ? Number(dana_yang_disetujui) : undefined,
           dana_approval: dana_approval ? Number(dana_approval) : undefined,
+          approved: approved ? Number(approved) : undefined,
         },
       });
 
