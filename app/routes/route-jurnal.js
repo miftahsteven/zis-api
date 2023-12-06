@@ -8,5 +8,6 @@ const { upload } = require("../helper/upload");
 router.get("/perintahbayar", authentication, jurnal.jurnalPerintahBayar);
 router.get("/category", authentication, jurnal.jurnalCategory);
 router.post("/create", authentication, jurnal.createJurnal);
+router.post("/createjurnalptc", authentication, jurnal.createJurnalPettyCash);
 
 module.exports = router;
