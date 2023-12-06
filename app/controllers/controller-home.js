@@ -308,7 +308,7 @@ module.exports = {
           program_id: "asc",
         },
         where: {
-          program_status: 2,
+          program_status: 1,
           program_isheadline: 1,
         },
         include: {

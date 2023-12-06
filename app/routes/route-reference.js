@@ -19,5 +19,10 @@ router.post("/addbank", authentication, refData.createMasterBank);
 router.put("/updatebank/:id", authentication, refData.updateBank);
 router.delete("/removebank", authentication, refData.deleteBank);
 
+router.get("/article", refData.getAllArticle)
+router.get("/article/:id", refData.getByIdArticle)
+router.post("/addArticle",authentication, upload.single("banner"), refData.registerArticle)
+router.put("/editArticle/:id",authentication, upload.single("banner"), refData.updateArticle)
+router.delete("/delArticle/:id",authentication, refData.deleteArticle)
 
 module.exports = router;

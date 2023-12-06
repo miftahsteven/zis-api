@@ -106,47 +106,41 @@ module.exports = {
       });
     }
   },
-  async getProgramByUserId(req, res) {
+  async getProposalById(req, res) {
     try {
-      const id = req.params.id;
       const page = Number(req.query.page || 1);
       const perPage = Number(req.query.perPage || 10);
-      const status = Number(req.query.status || 2);
+      const status = Number(req.query.status || 1);
       const skip = (page - 1) * perPage;
       const keyword = req.query.keyword || "";
-      const category = req.query.category || "";
-      const sortBy = req.query.sortBy || "program_id";
+      const sortBy = req.query.sortBy || "id";
       const sortType = req.query.order || "asc";
-
+      const id = req.params.id
       const params = {
-        user_id: parseInt(id),
-        program_title: {
-          contains: keyword,
-        },
-        ...(category ? { program_category_id: Number(category) } : {}),
+        user_id: Number(id)
       };
 
-      const [count, program] = await prisma.$transaction([
-        prisma.program.count({
+      const [count, proposal] = await prisma.$transaction([
+        prisma.proposal.count({
           where: params,
         }),
-        prisma.program.findMany({
+        prisma.proposal.findMany({
           orderBy: {
             [sortBy]: sortType,
           },
           where: params,
           include: {
-            program_category: true,
-            program_institusi: {
-              select: {
-                institusi_id: true,
-                institusi_nama: true,
-              },
-            },
-            program_banner: {
-              select: {
-                banners_path: true,
-                banners_id: true,
+            user: true,
+            proposal_approval: {
+              include: {
+                user: {
+                  select: {
+                    user_id: true,
+                    user_nama: true,
+                    username: true,
+                    user_phone: true,
+                  },
+                },
               },
             },
           },
@@ -155,30 +149,11 @@ module.exports = {
         }),
       ]);
 
-      const programResult = await Promise.all(
-        program.map(async (item) => {
-          const total_donation = await prisma.transactions.aggregate({
-            where: {
-              program_id: item.program_id,
-            },
-            _sum: {
-              amount: true,
-            },
-          });
-
-          return {
-            ...item,
-            program_target_amount: Number(item.program_target_amount),
-            total_donation: total_donation._sum.amount || 0,
-          };
-        })
-      );
-
       res.status(200).json({
         // aggregate,
         message: "Sukses Ambil Data",
 
-        data: programResult,
+        data: proposal,
         pagination: {
           total: count,
           page,
@@ -191,5 +166,5 @@ module.exports = {
         message: error?.message,
       });
     }
-  }
+  },
 };

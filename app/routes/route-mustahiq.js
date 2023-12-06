@@ -5,7 +5,7 @@ const { upload } = require("../helper/upload");
 const { validateFields } = require("../middleware/middleware-mustahiq");
 
 router.get("/", authentication, mustahiq.details); 
-router.get("/program/:id", authentication, mustahiq.getProgramByUserId); 
+router.get("/proposal/:id", authentication, mustahiq.getProposalById); 
 router.post(
   "/create",
   authentication,

@@ -19,7 +19,11 @@ module.exports = {
       const sortType = req.query.order || "asc";
 
       const params = {
-        program_status: status,
+        OR: [
+          { program_status: 1 },
+          { program_status: 0 }
+        ],
+        // program_status: status,
         program_title: {
           contains: keyword,
         },
@@ -298,7 +302,7 @@ module.exports = {
         program_banner: z
           .any().optional(),
       });
-  
+
       // BODY
       const body = await schema.safeParseAsync({
         // ...req.body,
@@ -310,32 +314,32 @@ module.exports = {
         program_target_amount: Number(req.body.program_target_amount),
         program_institusi_id: req.body.program_institusi_id ? parseInt(req.body.program_institusi_id) : undefined,
       });
-  
+
       const program_cat_id = Number(req.body.program_category_id);
-  
+
       let errorObj = {};
-  
+
       if (body.error) {
         body.error.issues.forEach((issue) => {
           errorObj[issue.path[0]] = issue.message;
         });
         body.error = errorObj;
       }
-  
+
       if (!body.success) {
         return res.status(400).json({
           message: "Beberapa Field Harus Diisi",
           error: errorObj,
         });
       }
-  
+
       // FILE
       const file = req.file;
       const program_id = req.params.id;
       const userId = req.user_id;
-  
+
       const { program_institusi_id, ...rest } = body.data;
-  
+
       let programUpdateData = {
         ...rest,
         program_category: {
@@ -351,7 +355,7 @@ module.exports = {
         // beneficiary: {
         //   connectOrCreate: {
         //     create: {
-  
+
         //     },
         //   }
         // },
@@ -366,7 +370,7 @@ module.exports = {
           }
           : {}),
       };
-  
+
       // Update program_banner if file is provided
       if (file) {
         const maxSize = 5000000;
@@ -376,7 +380,7 @@ module.exports = {
             message: "Ukuran Banner Terlalu Besar",
           });
         }
-  
+
         programUpdateData.program_banner = {
           create: {
             banners_name: rest.program_title,
@@ -384,20 +388,20 @@ module.exports = {
           },
         };
       }
-  
+
       const program = await prisma.program.update({
         where: {
           program_id: Number(program_id),
         },
         data: programUpdateData,
       });
-  
+
       if (!program) {
         return res.status(400).json({
           message: "Gagal Tambah Program",
         });
       }
-  
+
       await prisma.notification.create({
         data: {
           user: {
@@ -415,7 +419,7 @@ module.exports = {
           },
         },
       });
-  
+
       res.status(200).json({
         message: "Sukses Edit Program",
         data: JSON.parse(JSON.stringify({ ...program, program_target_amount: Number(program.program_target_amount) })),
@@ -426,7 +430,37 @@ module.exports = {
       });
     }
   },
-  
+  async verifiedProgram(req, res) {
+    try {
+      const program_id = req.params.id;
+      const program_status = req.body.program_status;
+
+      const program = await prisma.program.update({
+        where: {
+          program_id: Number(program_id),
+        },
+        data: {
+          program_status,
+        },
+      });
+
+      if (!program) {
+        return res.status(400).json({
+          message: "Program tidak ditemukan",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Aktifasi",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
 
   async getBanner(req, res) {
     try {
