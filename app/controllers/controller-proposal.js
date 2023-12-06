@@ -195,6 +195,7 @@ module.exports = {
         dana_yang_disetujui,
         dana_approval,
         approved,
+        status_bayar
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
@@ -264,6 +265,7 @@ module.exports = {
           dana_yang_disetujui: dana_yang_disetujui ? Number(dana_yang_disetujui) : undefined,
           dana_approval: dana_approval ? Number(dana_approval) : undefined,
           approved: approved ? Number(approved) : undefined,
+          status_bayar
         },
       });
 
