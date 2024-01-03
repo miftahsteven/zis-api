@@ -365,7 +365,7 @@ module.exports ={
         }
 
         // Array of allowed files
-        const array_of_allowed_files = ['csv'];
+        const array_of_allowed_files = ['txt'];
 
         // Get the extension of the uploaded file
         const file_extension = file.originalname.slice(
