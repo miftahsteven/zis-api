@@ -7,6 +7,10 @@ const rateLimit = require('express-rate-limit');
 const loginlimiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
     max: 3,
+    message: {
+        status: 429,
+        message: "Terlalu banyak kesalahan. Silakan ulangi dalam 10 menit."
+    },
     onLimitReached: (req, res, options) => {
         return res.status(429).json({
             message: "Terlalu banyak kesalahan. Silakan ulangi dalam 10 menit.",
