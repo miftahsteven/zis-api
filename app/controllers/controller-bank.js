@@ -363,6 +363,21 @@ module.exports ={
             message: "Ukuran File terlalu Besar",
           });
         }
+
+        // Array of allowed files
+        const array_of_allowed_files = ['csv'];
+
+        // Get the extension of the uploaded file
+        const file_extension = file.originalname.slice(
+            ((file.originalname.lastIndexOf('.') - 1) >>> 0) + 2
+        );
+
+        // Check if the uploaded file is allowed
+        if (!array_of_allowed_files.includes(file_extension)) {
+          return res.status(400).json({
+            message: "File Tidak Sesuai Format",
+          });
+        }
         
                           
         const {
