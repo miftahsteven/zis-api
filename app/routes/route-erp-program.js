@@ -11,5 +11,7 @@ router.get("/banner", authentication, programerp.getBanner);
 router.post("/create", authentication, upload.single("banner"), programerp.registerProgram);
 router.put("/update/:id", authentication, upload.single("banner"), programerp.updateProgram);
 router.put("/verif/:id", authentication, programerp.verifiedProgram);
+router.put("/updatehasnaf/:id", authentication, programerp.updateKategoriPenyaluran);
+
 
 module.exports = router;

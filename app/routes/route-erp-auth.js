@@ -3,9 +3,19 @@ const { usererp } = require("../controllers");
 const multer = require("multer");
 //const upload = multer({ dest: './uploads/reports/' })
 const { authentication, authorization } = require("../../config/auth");
+const rateLimit = require('express-rate-limit');
+const loginlimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 3,
+    onLimitReached: (req, res, options) => {
+        return res.status(429).json({
+            message: "Terlalu banyak kesalahan. Silakan ulangi dalam 10 menit.",
+        });
+    },
+});
 
 // GET localhost:8080/home => Ambil data semua dari awal
-router.post("/login", usererp.loginUser);
+router.post("/login", loginlimiter, usererp.loginUser);
 router.post("/register", authentication, usererp.registerUser);
 router.get("/detail/:id", authentication, usererp.detailUser);
 router.put("/update/:id", authentication, usererp.updateUser);

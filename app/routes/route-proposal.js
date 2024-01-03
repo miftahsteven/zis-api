@@ -8,7 +8,9 @@ const { upload } = require("../helper/upload");
 router.post("/create", authentication, proposal.createProposal);
 router.get("/details/:id", authentication, proposal.detailProposal);
 router.get("/all", authentication, proposal.getAllProposal);
+router.get("/penyaluranAll", authentication, proposal.kategoriPenyaluran);
 router.post("/approved", authentication, proposal.approvalProposal);
 router.post("/update/:id", authentication, proposal.updateProposal);
+router.put("/identified/:id", authentication, proposal.updateKategoriPenyaluran);
 
 module.exports = router;

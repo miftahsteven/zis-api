@@ -40,6 +40,7 @@ module.exports = {
           },
           where: params,
           include: {
+            kategori_penyaluran: true,
             program_category: true,
             program_institusi: {
               select: {
@@ -61,19 +62,21 @@ module.exports = {
 
       const programResult = await Promise.all(
         program.map(async (item) => {
-          const total_donation = await prisma.transactions.aggregate({
-            where: {
-              program_id: item.program_id,
-            },
-            _sum: {
-              amount: true,
-            },
-          });
-
+          // const total_donation = await prisma.transactions.aggregate({
+          //   where: {
+          //     program_id: Number(item.program_id),
+          //   },
+          //   _sum: {
+          //     amount: true,
+          //   },
+          // });
+          item.program_target_amount = undefined
           return {
             ...item,
-            program_target_amount: Number(item.program_target_amount),
-            total_donation: total_donation._sum.amount || 0,
+            //program_title: item.program_title
+            //kategori_penyaluran: ite
+            //program_target_amount: Number(item.program_target_amount),
+            //total_donation: total_donation._sum.amount || 0,
           };
         })
       );
@@ -495,6 +498,37 @@ module.exports = {
     } catch (error) {
       res.status(500).json({
         message: error?.message,
+      });
+    }
+  },
+  async updateKategoriPenyaluran(req, res) {
+    try {
+      const id = req.params.id;
+
+      const {
+        kategori_penyaluran        
+      } = req.body;
+
+      console.log(JSON.stringify(req.body))
+
+      const glResult = await prisma.program.update({
+        where: {
+          program_id: Number(id),
+        },
+        data: {
+          kat_penyaluran_id: Number(kategori_penyaluran)
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: glResult,
+      });
+    } catch (error) {
+
+      return res.status(500).json({
+        message: "Internal Server Error",
+        error: error.message,
       });
     }
   },

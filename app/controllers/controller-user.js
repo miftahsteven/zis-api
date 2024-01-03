@@ -259,11 +259,11 @@ module.exports = {
         },
       });
 
-      if (!user) {
-        return res.status(400).json({
-          message: "User tidak ditemukan",
-        });
-      }
+      // if (!user) {
+      //   return res.status(400).json({
+      //     message: "User tidak ditemukan",
+      //   });
+      // }
 
       const randomToken = crypto.randomBytes(32).toString("hex");
       console.log(randomToken);

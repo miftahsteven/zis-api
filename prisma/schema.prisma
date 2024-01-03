@@ -45,7 +45,7 @@ model program {
   program_end_date      DateTime?               @db.DateTime(0)
   program_description   String?                 @db.Text
   program_institusi_id  Int?
-  program_target_amount BigInt
+  program_target_amount Int
   program_create        DateTime?               @default(now()) @db.Timestamp(0)
   program_status        Int?                    @default(0) @db.SmallInt
   program_isheadline    Int?                    @default(0) @db.SmallInt
@@ -53,8 +53,10 @@ model program {
   user_id               Int
   program_category_id   Int?
   beneficiary_id        Int?
+  kat_penyaluran_id     Int?
   budget                budget[]
   notification          notification[]
+  kategori_penyaluran   kategori_penyaluran?    @relation(fields: [kat_penyaluran_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "program_FK")
   beneficiary           beneficiary?            @relation(fields: [beneficiary_id], references: [id])
   program_banner        banners                 @relation(fields: [program_banner_id], references: [banners_id])
   program_category      program_category?       @relation(fields: [program_category_id], references: [id])
@@ -67,6 +69,7 @@ model program {
   @@index([beneficiary_id], map: "program_beneficiary_id_fkey")
   @@index([program_category_id], map: "program_program_category_id_fkey")
   @@index([user_id], map: "program_user_id_fkey")
+  @@index([kat_penyaluran_id], map: "program_FK")
 }
 
 model program_category {
@@ -296,16 +299,17 @@ model recurring_transaction {
 }
 
 model document_type {
-  id           Int      @id @default(autoincrement())
-  indicator    String?
-  account_type String?
-  user_id      Int
-  created_at   DateTime @default(now()) @db.Timestamp(0)
-  description1 String?
-  description2 String?
-  description3 String?
-  posting_key  String?
-  user         user     @relation(fields: [user_id], references: [user_id])
+  id              Int               @id @default(autoincrement())
+  indicator       String?
+  account_type    String?
+  user_id         Int
+  created_at      DateTime          @default(now()) @db.Timestamp(0)
+  description1    String?
+  description2    String?
+  description3    String?
+  posting_key     String?
+  document_number document_number[]
+  user            user              @relation(fields: [user_id], references: [user_id])
 
   @@index([user_id], map: "document_type_user_id_fkey")
 }
@@ -319,13 +323,19 @@ model gl_account {
   description       String?
   coa               String?
   status            String?
+  bank_account      Int?
+  doc_number        Int?
+  asnaf_type_id     Int?
   ebs_validation    ebs_validation[]
+  document_number   document_number?    @relation(fields: [doc_number], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_FK_1")
   gl_account_type   gl_account_type?    @relation(fields: [gl_type], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gl_account_type_FK")
   jurnal            jurnal[]
   jurnal_petty_cash jurnal_petty_cash[]
   program_category  program_category[]
 
   @@index([gl_type], map: "gl_account_type_FK")
+  @@index([bank_account], map: "gl_account_FK")
+  @@index([doc_number], map: "gl_account_FK_1")
 }
 
 model gl_account_type {
@@ -391,73 +401,76 @@ model districts {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model proposal {
-  id                          Int                 @id @default(autoincrement())
+  id                          Int                  @id @default(autoincrement())
   user_id                     Int?
   program_id                  Int?
-  nama                        String?             @db.VarChar(100)
-  tempat_lahir                String?             @db.VarChar(100)
-  tgl_lahir                   String?             @db.VarChar(15)
-  jenis_kelamin               Int?                @default(0) @db.SmallInt
-  alamat_rumah                String?             @db.VarChar(255)
-  kode_pos                    String?             @db.VarChar(6)
-  status_rumah                Int?                @default(0) @db.SmallInt
-  status_pernikahan           Int?                @default(0) @db.SmallInt
-  jumlah_anak                 Int?                @default(0) @db.SmallInt
+  nama                        String?              @db.VarChar(100)
+  tempat_lahir                String?              @db.VarChar(100)
+  tgl_lahir                   String?              @db.VarChar(15)
+  jenis_kelamin               Int?                 @default(0) @db.SmallInt
+  alamat_rumah                String?              @db.VarChar(255)
+  kode_pos                    String?              @db.VarChar(6)
+  status_rumah                Int?                 @default(0) @db.SmallInt
+  status_pernikahan           Int?                 @default(0) @db.SmallInt
+  jumlah_anak                 Int?                 @default(0) @db.SmallInt
   penghasilan_bulanan         Int?
-  nama_pasangan               String?             @db.VarChar(100)
-  pekerjaan                   String?             @db.VarChar(100)
-  pendidikan_terakhir         Int?                @default(0) @db.SmallInt
-  nama_sekolah_universitas    String?             @db.VarChar(100)
-  fakultas                    String?             @db.VarChar(100)
-  jurusan                     String?             @db.VarChar(100)
-  tempat_mengajar             String?             @db.VarChar(255)
-  alamat_mengajar             String?             @db.VarChar(255)
-  nomor_telp_sekolah_kampus   String?             @db.VarChar(15)
-  sebagai_guru                String?             @db.VarChar(100)
-  bantuan_pihak_lain          String?             @db.VarChar(255)
+  nama_pasangan               String?              @db.VarChar(100)
+  pekerjaan                   String?              @db.VarChar(100)
+  pendidikan_terakhir         Int?                 @default(0) @db.SmallInt
+  nama_sekolah_universitas    String?              @db.VarChar(100)
+  fakultas                    String?              @db.VarChar(100)
+  jurusan                     String?              @db.VarChar(100)
+  tempat_mengajar             String?              @db.VarChar(255)
+  alamat_mengajar             String?              @db.VarChar(255)
+  nomor_telp_sekolah_kampus   String?              @db.VarChar(15)
+  sebagai_guru                String?              @db.VarChar(100)
+  bantuan_pihak_lain          String?              @db.VarChar(255)
   nominal_bantuan             Int?
-  nama_pemberi_rekomendasi    String?             @db.VarChar(100)
-  alamat_pemberi_rekomendasi  String?             @db.VarChar(255)
-  no_telp_pemberi_rekomendasi String?             @db.VarChar(15)
-  proposal_kategori           Int?                @default(0) @db.SmallInt
-  status_domisili             Int?                @default(0) @db.SmallInt
-  kelas_semester_saat_ini     String?             @db.VarChar(100)
-  alamat_sekolah_kampus       String?             @db.VarChar(100)
+  nama_pemberi_rekomendasi    String?              @db.VarChar(100)
+  alamat_pemberi_rekomendasi  String?              @db.VarChar(255)
+  no_telp_pemberi_rekomendasi String?              @db.VarChar(15)
+  proposal_kategori           Int?                 @default(0) @db.SmallInt
+  status_domisili             Int?                 @default(0) @db.SmallInt
+  kelas_semester_saat_ini     String?              @db.VarChar(100)
+  alamat_sekolah_kampus       String?              @db.VarChar(100)
   biaya_pendidikan_bulanan    Int?
-  organisasi_yang_diikuti     String?             @db.VarChar(255)
-  nama_ayah                   String?             @db.VarChar(100)
-  pekerjaan_ayah              String?             @db.VarChar(100)
+  organisasi_yang_diikuti     String?              @db.VarChar(255)
+  nama_ayah                   String?              @db.VarChar(100)
+  pekerjaan_ayah              String?              @db.VarChar(100)
   penghasilan_bulanan_ayah    Int?
-  nama_ibu                    String?             @db.VarChar(100)
-  pekerjaan_ibu               String?             @db.VarChar(100)
+  nama_ibu                    String?              @db.VarChar(100)
+  pekerjaan_ibu               String?              @db.VarChar(100)
   penghasilan_bulanan_ibu     Int?
   biaya_hidup_bulanan         Int?
-  jumlah_tanggungan           Int?                @default(0) @db.SmallInt
-  jenis_bantuan_kesehatan     String?             @default("0") @db.VarChar(255)
-  create_date                 DateTime?           @default(now()) @db.Timestamp(0)
-  status_approval             Int?                @default(0) @db.SmallInt
-  tanggal_approval            DateTime?           @db.DateTime(0)
+  jumlah_tanggungan           Int?                 @default(0) @db.SmallInt
+  jenis_bantuan_kesehatan     String?              @default("0") @db.VarChar(255)
+  create_date                 DateTime?            @default(now()) @db.Timestamp(0)
+  status_approval             Int?                 @default(0) @db.SmallInt
+  tanggal_approval            DateTime?            @db.DateTime(0)
   user_approver_id            Int?
-  status_approval2            Int?                @default(0) @db.SmallInt
-  tanggal_approval2           DateTime?           @db.DateTime(0)
-  status_perintah_bayar       Int?                @default(0) @db.SmallInt
-  status_approval3            Int?                @default(0) @db.SmallInt
-  tanggal_approval3           DateTime?           @db.DateTime(0)
+  status_approval2            Int?                 @default(0) @db.SmallInt
+  tanggal_approval2           DateTime?            @db.DateTime(0)
+  status_perintah_bayar       Int?                 @default(0) @db.SmallInt
+  status_approval3            Int?                 @default(0) @db.SmallInt
+  tanggal_approval3           DateTime?            @db.DateTime(0)
   user_approver_id3           Int?
-  status_bayar                Int?                @default(0) @db.SmallInt
-  dana_yang_diajukan          Int?                @default(0)
+  status_bayar                Int?                 @default(0) @db.SmallInt
+  dana_yang_diajukan          Int?                 @default(0)
   user_approver_id2           Int?
-  status_all                  Int?                @default(0) @db.SmallInt
+  status_all                  Int?                 @default(0) @db.SmallInt
   dana_yang_disetujui         Int?
-  approved                    Int?                @default(0) @db.SmallInt
+  approved                    Int?                 @default(0) @db.SmallInt
   dana_approval               Int?
+  kategori_penyaluran_id      Int?
   jurnal                      jurnal[]
-  user                        user?               @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
-  program                     program?            @relation(fields: [program_id], references: [program_id], onUpdate: SetNull, map: "proposal_FK_1")
+  user                        user?                @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
+  program                     program?             @relation(fields: [program_id], references: [program_id], onUpdate: SetNull, map: "proposal_FK_1")
+  kategori_penyaluran         kategori_penyaluran? @relation(fields: [kategori_penyaluran_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK_2")
   proposal_approval           proposal_approval[]
 
   @@index([user_id], map: "proposal_FK")
   @@index([program_id], map: "proposal_FK_1")
+  @@index([kategori_penyaluran_id], map: "proposal_FK_2")
 }
 
 model mt_file {
@@ -579,4 +592,92 @@ model jurnal_petty_cash {
   @@index([glaccount], map: "jurnal_FK")
   @@index([transaction_petty_cash_id], map: "jurnal_FK_2")
   @@index([jurnal_category_id], map: "jurnal_FK_3")
+}
+
+model asnaf_type {
+  id                  Int                   @id @default(autoincrement())
+  type                String?               @db.VarChar(100)
+  deskripsi           String?               @db.VarChar(100)
+  kategori_penyaluran kategori_penyaluran[]
+}
+
+model kategori_penyaluran {
+  id            Int         @id @default(autoincrement())
+  asnaf_type_id Int?
+  kategori_nama String?     @db.VarChar(255)
+  asnaf_type    asnaf_type? @relation(fields: [asnaf_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kategori_penyaluran_FK")
+  program       program[]
+  proposal      proposal[]
+
+  @@index([asnaf_type_id], map: "kategori_penyaluran_FK")
+}
+
+model document_number {
+  id            Int            @id @default(autoincrement())
+  type_id       Int?
+  number        Int?
+  deskripsi     String?        @db.VarChar(255)
+  document_type document_type? @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "document_number_FK")
+  gl_account    gl_account[]
+
+  @@index([type_id], map: "document_number_FK")
+}
+
+model mutation_data_migrasi {
+  id               Int       @id @default(autoincrement())
+  tgl_mutasi       DateTime? @db.Date
+  nama             String?   @db.VarChar(100)
+  alamat           String?   @db.Text
+  kota             String?   @db.VarChar(100)
+  province         String?   @db.VarChar(100)
+  no_imkas         String?   @db.VarChar(15)
+  referentor       String?   @db.VarChar(100)
+  program          String?   @db.VarChar(100)
+  total_dana       Int?
+  ccoa             String?   @db.VarChar(100)
+  gl_account_id    Int?
+  gl_account       String?   @db.VarChar(100)
+  program_kategori String?   @db.VarChar(30)
+  asnaf_type       String?   @db.VarChar(100)
+  deskripsi        String?   @db.Text
+}
+
+model mutation_data_migrasi2 {
+  id               Int       @id @default(autoincrement())
+  tgl_mutasi       DateTime? @db.Date
+  nama             String?   @db.VarChar(200)
+  alamat           String?   @db.Text
+  kota             String?   @db.VarChar(100)
+  province         String?   @db.VarChar(100)
+  no_imkas         String?   @db.VarChar(20)
+  referentor       String?   @db.VarChar(100)
+  program          String?   @db.VarChar(100)
+  total_dana       BigInt?
+  ccoa             String?   @db.VarChar(100)
+  gl_account_id    Int?
+  gl_account       String?   @db.VarChar(100)
+  program_kategori String?   @db.VarChar(30)
+  asnaf_type       String?   @db.VarChar(100)
+  deskripsi        String?   @db.Text
+}
+
+model mutation_data_migrasi3 {
+  id                Int       @id @default(autoincrement())
+  tgl_mutasi        DateTime? @db.Date
+  nama              String?   @db.VarChar(200)
+  alamat            String?   @db.Text
+  kota              String?   @db.VarChar(100)
+  province          String?   @db.VarChar(100)
+  no_imkas          String?   @db.VarChar(20)
+  referentor        String?   @db.VarChar(100)
+  program           String?   @db.VarChar(100)
+  total_dana_debit  Float?
+  total_dana_credit Float?
+  ccoa              String?   @db.VarChar(100)
+  gl_account_id     Int?
+  gl_account        String?   @db.VarChar(100)
+  program_kategori  String?   @db.VarChar(30)
+  asnaf_type        String?   @db.VarChar(100)
+  deskripsi         String?   @db.Text
+  program_category  String?   @db.VarChar(50)
 }

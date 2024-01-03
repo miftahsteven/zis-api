@@ -352,6 +352,11 @@ module.exports = {
               },
             },
             //program:true,
+            program:{
+              include: {
+                 kategori_penyaluran: true
+              }
+            },            
             proposal_approval: {
               include: {
                 user: {
@@ -359,7 +364,7 @@ module.exports = {
                     user_id: true,
                     user_nama: true,
                     username: true,
-                    user_phone: true,
+                    user_phone: true,                    
                   },
                 },
               },
@@ -434,6 +439,65 @@ module.exports = {
     } catch (error) {
       return res.status(500).json({
         message: error?.message,
+      });
+    }
+  },
+
+  async kategoriPenyaluran(req, res) {
+    try {
+      //const id = req.params.id;
+
+      const proposal = await prisma.kategori_penyaluran.findMany({        
+        include: {
+          asnaf_type: true
+        },
+      });
+
+      if (!proposal) {
+        return res.status(404).json({
+          message: "Proposal tidak ditemukan",
+        });
+      }
+
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: proposal,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+  async updateKategoriPenyaluran(req, res) {
+    try {
+      const id = req.params.id;
+
+      const {
+        kategori_penyaluran        
+      } = req.body;
+
+      //console.log(JSON.stringify(req.body))
+
+      const glResult = await prisma.proposal.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          kategori_penyaluran_id: Number(kategori_penyaluran)
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: glResult,
+      });
+    } catch (error) {
+
+      return res.status(500).json({
+        message: "Internal Server Error",
+        error: error.message,
       });
     }
   },

@@ -452,4 +452,21 @@ module.exports = {
       });
     }
   },
+  async getDataKategory(req, res) {
+    try {
+      
+      const type = await prisma.program_category.findMany({
+      
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: type,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 };
