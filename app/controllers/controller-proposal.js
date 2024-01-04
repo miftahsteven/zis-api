@@ -75,6 +75,8 @@ module.exports = {
         });
       }
 
+      const file = req.file;
+
       const ProposalResult = await prisma.proposal.create({
         data: {
           user: {
@@ -128,8 +130,12 @@ module.exports = {
           nama_pemberi_rekomendasi,
           alamat_pemberi_rekomendasi,
           no_telp_pemberi_rekomendasi,
+          fileupload: `uploads/${file.filename}`,
         },
       });
+
+
+
 
       return res.status(200).json({
         message: "Sukses",
@@ -471,6 +477,37 @@ module.exports = {
     }
   },
   async updateKategoriPenyaluran(req, res) {
+    try {
+      const id = req.params.id;
+
+      const {
+        kategori_penyaluran        
+      } = req.body;
+
+      //console.log(JSON.stringify(req.body))
+
+      const glResult = await prisma.proposal.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          kategori_penyaluran_id: Number(kategori_penyaluran)
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: glResult,
+      });
+    } catch (error) {
+
+      return res.status(500).json({
+        message: "Internal Server Error",
+        error: error.message,
+      });
+    }
+  },
+  async uploadlampiran(req, res) {
     try {
       const id = req.params.id;
 
