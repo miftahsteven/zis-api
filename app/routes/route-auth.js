@@ -5,7 +5,7 @@ const multer = require("multer");
 const { authentication, authorization } = require("../../config/auth");
 const rateLimit = require('express-rate-limit');
 const loginlimiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
+    windowMs: 3 * 60 * 1000, // 10 minutes
     max: 3,
     message: {
         status: 429,

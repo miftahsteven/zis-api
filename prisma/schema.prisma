@@ -207,7 +207,7 @@ model transactions {
   status         String         @default("pending") @db.VarChar(100)
   notification   notification[]
   program        program        @relation(fields: [program_id], references: [program_id])
-  user           user           @relation(fields: [user_id], references: [user_id])
+  user           user           @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([program_id], map: "transactions_program_id_fkey")
   @@index([user_id], map: "transactions_user_id_fkey")
@@ -462,6 +462,14 @@ model proposal {
   approved                    Int?                 @default(0) @db.SmallInt
   dana_approval               Int?
   kategori_penyaluran_id      Int?
+  fileupload                  String?              @db.Text
+  lampiran1                   String?              @db.Text
+  lampiran2                   String?              @db.Text
+  lampiran3                   String?              @db.Text
+  lampiran4                   String?              @db.Text
+  lampiran5                   String?              @db.Text
+  lampiran6                   String?              @db.Text
+  lampiran7                   String?              @db.Text
   jurnal                      jurnal[]
   user                        user?                @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "proposal_FK")
   program                     program?             @relation(fields: [program_id], references: [program_id], onUpdate: SetNull, map: "proposal_FK_1")
