@@ -70,12 +70,105 @@ module.exports = {
           //     amount: true,
           //   },
           // });
-          item.program_target_amount = undefined
+          //item.program_target_amount = undefined
           return {
             ...item,
             //program_title: item.program_title
             //kategori_penyaluran: ite
-            //program_target_amount: Number(item.program_target_amount),
+            program_target_amount: Number(item.program_target_amount),
+            //total_donation: total_donation._sum.amount || 0,
+          };
+        })
+      );
+
+      res.status(200).json({
+        // aggregate,
+        message: "Sukses Ambil Data",
+
+        data: programResult,
+        pagination: {
+          total: count,
+          page,
+          hasNext: count > page * perPage,
+          totalPage: Math.ceil(count / perPage),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
+
+  async getAllProgramDetail(req, res) {
+    try {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const status = Number(req.query.status || 1);
+      const skip = (page - 1) * perPage;
+      const keyword = req.query.keyword || "";
+      const category = req.query.category || "";
+      const sortBy = req.query.sortBy || "program_id";
+      const sortType = req.query.order || "asc";
+
+      const params = {
+        OR: [
+          { program_status: 1 },
+          { program_status: 0 }
+        ],
+        // program_status: status,
+        program_title: {
+          contains: keyword,
+        },
+        ...(category ? { program_category_id: Number(category) } : {}),
+      };
+
+      const [count, program] = await prisma.$transaction([
+        prisma.program.count({
+          where: params,
+        }),
+        prisma.program.findMany({
+          orderBy: {
+            [sortBy]: sortType,
+          },
+          where: params,
+          include: {
+            kategori_penyaluran: true,
+            program_category: true,
+            program_institusi: {
+              select: {
+                institusi_id: true,
+                institusi_nama: true,
+              },
+            },
+            program_banner: {
+              select: {
+                banners_path: true,
+                banners_id: true,
+              },
+            },
+          },
+          skip,
+          take: perPage,
+        }),
+      ]);
+
+      const programResult = await Promise.all(
+        program.map(async (item) => {
+          // const total_donation = await prisma.transactions.aggregate({
+          //   where: {
+          //     program_id: Number(item.program_id),
+          //   },
+          //   _sum: {
+          //     amount: true,
+          //   },
+          // });
+          //item.program_target_amount = undefined
+          return {
+            ...item,
+            //program_title: item.program_title
+            //kategori_penyaluran: ite
+            program_target_amount: Number(item.program_target_amount),
             //total_donation: total_donation._sum.amount || 0,
           };
         })
