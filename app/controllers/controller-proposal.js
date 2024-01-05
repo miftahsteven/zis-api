@@ -363,9 +363,13 @@ module.exports = {
             },
             //program:true,
             program: {
-              include: {
+              select:{  
+                pogram_target_amount: false,
                 kategori_penyaluran: true
-              }
+              },
+              // include: {
+               
+              // }
             },
             proposal_approval: {
               include: {
@@ -388,12 +392,13 @@ module.exports = {
           take: perPage,
         }),
       ]);
-
+      // item.program_target_amount = undefined
       const propResult = await Promise.all(
         proposals.map(async (item) => {
+          //item.program_target_amount = undefined
           return {
             ...item,
-            //program_target_amount: Number(item.program_target_amount),
+            pogram_target_amount: Number(item.program_target_amount),            
             //total_donation: total_donation._sum.amount || 0,
           };
         })
