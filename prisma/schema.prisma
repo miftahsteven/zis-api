@@ -45,7 +45,7 @@ model program {
   program_end_date      DateTime?               @db.DateTime(0)
   program_description   String?                 @db.Text
   program_institusi_id  Int?
-  program_target_amount Int
+  program_target_amount BigInt
   program_create        DateTime?               @default(now()) @db.Timestamp(0)
   program_status        Int?                    @default(0) @db.SmallInt
   program_isheadline    Int?                    @default(0) @db.SmallInt
