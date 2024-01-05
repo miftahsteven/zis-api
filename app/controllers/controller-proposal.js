@@ -12,70 +12,77 @@ module.exports = {
   async createProposal(req, res) {
     try {
       const userId = req.user_id;
-      const {
-        program_id,
-        user_id,
-        proposal_kategori,
-        nama,
-        alamat_rumah,
-        kode_pos,
-        status_domisili,
-        tgl_lahir,
-        tempat_lahir,
-        jenis_kelamin,
-        status_rumah,
-        status_pernikahan,
-        jumlah_anak,
-        penghasilan_bulanan,
-        nama_pasangan,
-        pekerjaan,
-        pendidikan_terakhir,
-        nama_sekolah_universitas,
-        fakultas,
-        jurusan,
-        kelas_semester_saat_ini,
-        alamat_sekolah_kampus,
-        nomor_telp_sekolah_kampus,
-        tempat_mengajar,
-        alamat_mengajar,
-        sebagai_guru,
-        biaya_pendidikan_bulanan,
-        jumlah_tanggungan,
-        organisasi_yang_diikuti,
-        nama_ayah,
-        pekerjaan_ayah,
-        penghasilan_bulanan_ayah,
-        nama_ibu,
-        pekerjaan_ibu,
-        penghasilan_bulanan_ibu,
-        jenis_bantuan_kesehatan,
-        bantuan_pihak_lain,
-        nominal_bantuan,
-        biaya_hidup_bulanan,
-        nama_pemberi_rekomendasi,
-        alamat_pemberi_rekomendasi,
-        no_telp_pemberi_rekomendasi,
-        dana_yang_diajukan,
-      } = req.body;
+      const program_id = req.body.program_id;
+      const proposal_kategori = req.body.proposal_kategori;
+      const nama = req.body.nama;
+      const alamat_rumah = req.body.alamat_rumah;
+      const kode_pos = req.body.kode_pos;
+      const status_domisili = req.body.status_domisili;
+      const tgl_lahir = req.body.tgl_lahir;
+      const tempat_lahir = req.body.tempat_lahir;
+      const jenis_kelamin = req.body.jenis_kelamin;
+      const status_rumah = req.body.status_rumah;
+      const status_pernikahan = req.body.status_pernikahan;
+      const jumlah_anak = req.body.jumlah_anak;
+      const penghasilan_bulanan = req.body.penghasilan_bulanan;
+      const nama_pasangan = req.body.nama_pasangan;
+      const pekerjaan = req.body.pekerjaan;
+      const pendidikan_terakhir = req.body.pendidikan_terakhir;
+      const nama_sekolah_universitas = req.body.nama_sekolah_universitas;
+      const fakultas = req.body.fakultas;
+      const jurusan = req.body.jurusan;
+      const kelas_semester_saat_ini = req.body.kelas_semester_saat_ini;
+      const alamat_sekolah_kampus = req.body.alamat_sekolah_kampus;
+      const nomor_telp_sekolah_kampus = req.body.nomor_telp_sekolah_kampus;
+      const tempat_mengajar = req.body.tempat_mengajar;
+      const alamat_mengajar = req.body.alamat_mengajar;
+      const sebagai_guru = req.body.sebagai_guru;
+      const biaya_pendidikan_bulanan = req.body.biaya_pendidikan_bulanan;
+      const jumlah_tanggungan = req.body.jumlah_tanggungan;
+      const organisasi_yang_diikuti = req.body.organisasi_yang_diikuti;
+      const nama_ayah = req.body.nama_ayah;
+      const pekerjaan_ayah = req.body.pekerjaan_ayah;
+      const penghasilan_bulanan_ayah = req.body.penghasilan_bulanan_ayah;
+      const nama_ibu = req.body.nama_ibu;
+      const pekerjaan_ibu = req.body.pekerjaan_ibu;
+      const penghasilan_bulanan_ibu = req.body.penghasilan_bulanan_ibu;
+      const jenis_bantuan_kesehatan = req.body.jenis_bantuan_kesehatan;
+      const bantuan_pihak_lain = req.body.bantuan_pihak_lain;
+      const nominal_bantuan = req.body.nominal_bantuan;
+      const biaya_hidup_bulanan = req.body.biaya_hidup_bulanan;
+      const nama_pemberi_rekomendasi = req.body.nama_pemberi_rekomendasi;
+      const alamat_pemberi_rekomendasi = req.body.alamat_pemberi_rekomendasi;
+      const no_telp_pemberi_rekomendasi = req.body.no_telp_pemberi_rekomendasi;
+      const dana_yang_diajukan = req.body.dana_yang_diajukan;
+
 
       //console.log(JSON.stringify(req.body))
 
-      if (
-        !nama ||
-        !userId ||
-        !program_id ||
-        !proposal_kategori ||
-        !nama_pemberi_rekomendasi ||
-        !alamat_pemberi_rekomendasi ||
-        !no_telp_pemberi_rekomendasi
-      ) {
-        return res.status(400).json({
-          message:
-            "Nama, dan Program Id, Kategori Proposal, nama alamat dan nomor telepon pemberi rekomendasi wajib diisi",
-        });
+      if (!nama) {
+        return res.status(400).json({ message: "Nama wajib diisi" });
+      } else if (!userId) {
+        return res.status(400).json({ message: "User ID wajib diisi" });
+      } else if (!program_id) {
+        return res.status(400).json({ message: "Program ID wajib diisi" });
+      } else if (!proposal_kategori) {
+        return res.status(400).json({ message: "Kategori Proposal wajib diisi" });
+      } else if (!nama_pemberi_rekomendasi) {
+        return res.status(400).json({ message: "Nama Pemberi Rekomendasi wajib diisi" });
+      } else if (!alamat_pemberi_rekomendasi) {
+        return res.status(400).json({ message: "Alamat Pemberi Rekomendasi wajib diisi" });
+      } else if (!no_telp_pemberi_rekomendasi) {
+        return res.status(400).json({ message: "Nomor Telepon Pemberi Rekomendasi wajib diisi" });
       }
 
-      const file = req.file;
+      const files = {};
+      for (let i = 1; i <= 7; i++) {
+        const file = req.files[`lampiran${i}`];
+        console.log(file)
+        if (file) {
+          console.log(file?.[0])
+          files[`lampiran${i}`] = "uploads/"+ file?.[0].filename;
+        }
+      }
 
       const ProposalResult = await prisma.proposal.create({
         data: {
@@ -130,12 +137,9 @@ module.exports = {
           nama_pemberi_rekomendasi,
           alamat_pemberi_rekomendasi,
           no_telp_pemberi_rekomendasi,
-          fileupload: `uploads/${file.filename}`,
+          ...files,
         },
       });
-
-
-
 
       return res.status(200).json({
         message: "Sukses",
@@ -358,11 +362,11 @@ module.exports = {
               },
             },
             //program:true,
-            program:{
+            program: {
               include: {
-                 kategori_penyaluran: true
+                kategori_penyaluran: true
               }
-            },            
+            },
             proposal_approval: {
               include: {
                 user: {
@@ -370,7 +374,7 @@ module.exports = {
                     user_id: true,
                     user_nama: true,
                     username: true,
-                    user_phone: true,                    
+                    user_phone: true,
                   },
                 },
               },
@@ -453,7 +457,7 @@ module.exports = {
     try {
       //const id = req.params.id;
 
-      const proposal = await prisma.kategori_penyaluran.findMany({        
+      const proposal = await prisma.kategori_penyaluran.findMany({
         include: {
           asnaf_type: true
         },
@@ -481,7 +485,7 @@ module.exports = {
       const id = req.params.id;
 
       const {
-        kategori_penyaluran        
+        kategori_penyaluran
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
@@ -512,7 +516,7 @@ module.exports = {
       const id = req.params.id;
 
       const {
-        kategori_penyaluran        
+        kategori_penyaluran
       } = req.body;
 
       //console.log(JSON.stringify(req.body))
