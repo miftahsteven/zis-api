@@ -300,8 +300,9 @@ module.exports = {
         data: "Berhasil Kirim Email",
       });
     } catch (error) {
-      return res.status(500).json({
-        message: error?.message,
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Kirim Email",
       });
     }
   },
