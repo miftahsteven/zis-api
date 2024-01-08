@@ -1,22 +1,40 @@
 const { verify } = require("../app/helper/auth-jwt");
 const ApiError = require("../app/helper/api-error");
 const { JsonWebTokenError, TokenExpiredError } = require("jsonwebtoken");
+const { deleteBank } = require("../app/controllers/controller-pettycash");
+const { prisma } = require("../prisma/client");
 
-const authentication = (req, res, next) => {
+const authentication = async (req, res, next) => {
   try {
     const headerToken = req.headers.authorization;
     if (headerToken) {
       const token = headerToken.split(" ")[1];
       const payload = verify(token);
+      //console.log("+++++++", token);
       req.user = payload;
       req.user_id = payload.user_id;
-      return next();
+      //const {id} = req.user;
+      const user = await prisma.user.findFirst({
+        where : {user_token: token, user_status:1}
+      })
+
+      //console.log("+++++++", JSON.stringify(user));
+
+      if(user){
+        return next();
+      }else{
+        return res.status(401).send({
+          success: false,
+          code: 101,
+          message: "ERROR : LOGIN EXPIRED",
+        });
+      }
     }
     //throw ApiError.badRequest("Login Ulang !");
-    return res.status(401).send({
-      success: false,
-      message: "ERROR : ANDA HARUS LOGIN ULANG",
-    });
+    // return res.status(401).send({
+    //   success: false,
+    //   message: "ERROR : ANDA HARUS LOGIN ULANG",
+    // });
   } catch (error) {
     if (error instanceof TokenExpiredError) {
       return res.status(401).send({
