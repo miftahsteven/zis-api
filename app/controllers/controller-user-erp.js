@@ -469,4 +469,27 @@ module.exports = {
       });
     }
   },
+  async deleteToken(req, res) {
+    try {
+      const userId = req.body.user_id;
+
+      await prisma.user.update({
+        where: {
+          user_id: Number(userId),
+        },        
+        data: {
+          user_token: null,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sukses",
+        data: "Berhasil Update Token",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error?.message,
+      });
+    }
+  },
 };
