@@ -406,9 +406,11 @@ module.exports = {
       async settlementCreate(req, res) {
         try {        
   
-          const userId = req.user_id;
+          const userId = req.user_id; 
           const id = req.body.id;
-          
+          const array_of_allowed_files = ['pdf','png','jpg','jpeg'];
+
+
           const file = req.file;      
           if (!file) {
             return res.status(400).json({
@@ -422,6 +424,17 @@ module.exports = {
   
             return res.status(400).json({
               message: "Ukuran File terlalu Besar",
+            });
+          }
+
+          const file_extension = file.originalname.slice(
+              ((file.originalname.lastIndexOf('.') - 1) >>> 0) + 2
+          );
+
+          // Check if the uploaded file is allowed
+          if (!array_of_allowed_files.includes(file_extension)) {
+            return res.status(400).json({
+              message: "File Tidak Sesuai Format",
             });
           }
           
