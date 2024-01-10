@@ -7,7 +7,7 @@ const { generateTemplate, sendEmail, generateTemplateForgotEmail } = require("..
 const crypto = require("node:crypto");
 
 module.exports = {
-  // LOGIN USER
+  // LOGIN USER 
   async loginUser(req, res) {
     try {
       const { username, password } = req.body;
